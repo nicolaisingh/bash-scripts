@@ -19,7 +19,7 @@ fi
 
 while true
 do
-	mpc idle > /dev/null 2>&1
 	update_i3blocks
+	mpc idle > /dev/null 2>&1
 done
 
