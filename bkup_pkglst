@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Script for creating a backup of currently installed packages in the system.
+#
+# Written by Nicolai Andrew Singh
+#
+
+if [ ! -f /usr/bin/pacman  ]
+then
+	echo 'Cannot proceed, pacman is not installed. Aborting...'
+fi
+
+currdate=$(date +%Y%m%d_%H%M%S)
+
+if [ ! -d './pkglst' ]
+then
+	mkdir pkglst
+fi
+
+	echo -n 'Generating list of all packages installed...'
+	pacman -Qqe> pkglst/"$currdate"_pkglst_all
+	echo 'Done.'
+
+	echo -n 'Generating list of official packages...'
+	pacman -Qqe | grep -v "$(pacman -Qqm)"> pkglst/"$currdate"_pkglst_off
+	echo 'Done.'
+
+	echo -n 'Generating list of AUR packages...'
+	pacman -Qqm> pkglst/"$currdate"_pkglst_aur
+	echo 'Done.'
+
+exit

@@ -1,0 +1,576 @@
+#!/bin/bash
+#
+# Script for arranging images using XMP tags.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+# Pictures path
+picdir=/mmedia/pic
+
+# Photo collection path (Tag-arranged)
+destdir=/home/nas/pic-tag
+
+
+chkdirs()
+{
+	if [ ! -d "$picdir" ]; then
+		echo "$picdir could not be found! Exiting..."
+		exit
+	fi
+}
+
+chkdirs2()
+{
+
+	if [ ! -d "$destdir" ]; then
+		echo "$destdir could not be found! Exiting..."
+		exit
+	fi
+}
+
+prompt()
+{
+	read -p 'Continue? [y/n]' c
+	if [ "N" = "$c" ] || [ "n" = "$c" ]; then
+		exit
+	fi
+}
+
+ifs_change_nb()
+{
+	oIFS="$IFS"
+	IFS=`echo -en "\n\b"`
+}
+
+ifs_change_comma()
+{
+	IFS=","
+}
+
+ifs_revert()
+{
+	IFS="$oIFS"
+}
+
+displayhelp()
+{
+	echo 'Script for arranging pictures by XMP tags'
+	echo 'Usage: organizepics [MODE]'
+	echo ''
+	echo '  MODE can be any one of the ff.:'
+	echo ''
+	echo '  FILE/DIR MODES:'
+	echo '   -a TARGET TAG...       Add all TAGs specified to pictures in TARGET (file/dir)'
+	echo '   -d TARGET TAG...       Delete all TAGs specified to pictures in TARGET (file/dir)'
+	echo '   -f DIR                 Fix directory structure of target according to photo collection'
+	echo '                             YYYYMMDD (Event)/filename.jpg'
+	echo '   -v TARGET              View tags of a single file/dir'
+	echo ''
+	echo '  PHOTO COLLECTION MODES:'
+	echo '   -c                     Clean photo collection (Removes broken links in the'
+	echo '                             photo collection)'
+	echo '   -g                     Generate a list of the photo collection (tagged) and'
+        echo '                             the original photos (untagged)'
+	echo '   -r                     Recreate photo collection (Deletes current collection'
+	echo '                             and relinks all pictures in pictures path'
+	echo '   -u                     Update photo collection (Create links for new pictures'
+	echo '                             found in pictures path)'
+
+	exit
+}
+
+perform_addtag()
+{
+	echo "Processing: $pic"
+	for t in ${tag[@]}
+	do
+		echo "  Adding tag: $t"
+		exiv2 -M "set Xmp.dc.subject $t" "$pic"
+	done
+}
+
+addtag()
+{
+	ifs_change_nb
+
+	if [ -f "$in" ]; then
+		pic="$in"
+		perform_addtag
+	else
+		for pic in `find "$in" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+		do
+			perform_addtag
+		done
+	fi
+
+	ifs_revert
+
+	exit
+}
+
+perform_deletetag()
+{
+	echo "Processing: $pic"
+
+	# Retrieve pic's tags as an array
+	tags=`exiv2 -Pv -g 'Xmp.dc.subject' "$pic"`
+	ifs_change_comma
+	tag_arr=($tags)
+
+	if [ -n "${tag_arr[0]}" ]; then
+		# Clean pic's current tags
+		exiv2 -M "del Xmp.dc.subject" "$pic"
+		del_flag=0
+
+		for tag_element in "${tag_arr[@]}"
+		do
+			# Remove leading and trailing spaces on the current tag
+			tag_element=`echo $tag_element | sed 's/^ *//;s/ *$//'`
+
+			for tag_del in ${tag[@]}
+			do
+				# Mark tag to avoid being added
+				if [ "$tag_element" = "$tag_del" ]; then
+					echo "  Deleting tag: $tag_del"
+					del_flag=1
+				fi
+			done
+
+			if [ "$del_flag" -eq 0 ]; then
+				exiv2 -M "set Xmp.dc.subject $tag_element" "$pic"
+			else
+				del_flag=0
+			fi
+		done
+	else
+		echo 'File does not have any tag. Nothing to do.'
+	fi
+}
+
+deletealltag()
+{
+	ifs_change_nb
+
+	if [ -f "$in" ]; then
+		pic="$in"
+		exiv2 -M "del Xmp.dc.subject" "$pic"
+
+	else
+		for pic in `find "$in" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+		do
+			exiv2 -M "del Xmp.dc.subject" "$pic"
+		done
+	fi
+
+	ifs_revert
+
+	exit
+}
+
+deletetag()
+{
+	ifs_change_nb
+
+	if [ -f "$in" ]; then
+		pic="$in"
+		perform_deletetag
+
+	else
+		for pic in `find "$in" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+		do
+			perform_deletetag
+		done
+	fi
+
+	ifs_revert
+
+	exit
+}
+
+perform_fixdir()
+{
+	echo "File: $pic"
+
+	# Path of the pic without the actual file
+	picpath=`echo ${pic%/*}`
+
+	# Timestamp without colons and spaces (e.g. 20001201)
+	dir=`exiv2 -Pv -g 'Exif.Photo.DateTimeOriginal' "$pic" | sed 's/ .*//g' | tr -d ':'`
+	if [ -z "$dir" ]; then
+		dir='Other'
+	fi
+	
+	# Include event in folder name if valid
+	if [ -n "$event" ]; then
+		dir="$dir ($event)"
+	fi
+
+	if [ ! -d "${picpath}/${dir}" ]; then
+		mkdir "${picpath}/${dir}"
+	fi
+
+	mv "$pic" "${picpath}/${dir}"
+}
+
+fixdir()
+{
+	ifs_change_nb
+
+	echo 'Fixing file/directory structure...'
+
+	if [ -f "$in" ]; then
+		pic="$in"
+		perform_fixdir
+	else
+		for pic in `find "$in" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+		do
+			perform_fixdir
+		done
+	fi
+
+	ifs_revert
+
+	exit
+}
+
+perform_viewtag()
+{
+	echo "File: $pic"
+	echo -n "  - "
+	exiv2 -Pv -g Xmp.dc.subject "$pic"
+}
+
+viewtag()
+{
+	ifs_change_nb
+
+	if [ -f "$in" ]; then
+		pic="$in"
+		perform_viewtag
+	else
+		for pic in `find "$in" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+		do
+			perform_viewtag
+		done
+	fi
+
+	ifs_revert
+
+	exit
+}
+
+updatedb()
+{
+	if [ ! -f "$picdir/.list" ]; then
+		echo 'No file found for comparison of new files. Generate first pic list by running with option -g'
+		exit
+	fi
+
+	mv "$picdir/.list" "$picdir/.list.old"
+
+	ifs_change_nb
+
+	gendir="$picdir"
+	perform_genpiclist
+
+	pic_arr=(`diff --changed-group-format='%<' --unchanged-group-format='' "${picdir}/.list" "${picdir}/.list.old"`)
+	for p in "${pic_arr[@]}"
+	do
+		pic=${picdir}/${p}
+
+		tags=`exiv2 -Pv -g 'Xmp.dc.subject' "$pic"`
+		ifs_change_comma
+		tag_arr=($tags)
+		ifs_revert
+
+		if [ -n "${tag_arr[0]}" ]; then
+			echo "  $pic | Tags: $tags"
+			for tag_element in "${tag_arr[@]}"
+			do
+				tag_element=`echo $tag_element | sed 's/^ *//;s/ *$//'`
+				perform_recreatedb
+			done
+		else
+			echo "  $pic | Tags: [none]"
+			tag_element='_No Tag'
+			perform_recreatedb
+		fi
+	done
+
+	ifs_revert
+
+	exit
+}
+
+perform_recreatedb()
+{
+	if [ ! -d "$destdir/$tag_element" ]; then
+		echo "Creating directory: $tag_element"
+		mkdir -p "$destdir/$tag_element"
+	fi
+
+	# Get picture's EXIF timestamp
+	timestamp=`exiv2 -PEv -g Exif.Photo.DateTimeOriginal "$pic" | tr -d ' :'`
+
+	# If unavailable, get picture's Date Modified value instead
+	if [ -z "$timestamp" ]; then
+		timestamp=e`stat -c '%Y' "$pic"`
+	fi
+
+	ln -s -i "$pic" "$destdir/$tag_element/${timestamp}_${pic##*/}"
+}
+
+recreatedb()
+{
+	echo 'Recreating photo collection...'
+	if [ -d "$destdir" ]; then
+		rm -Rf "$destdir"
+	fi
+	mkdir -p "$destdir"
+
+	ifs_change_nb
+
+	for pic in `find "$picdir" -iname '*.png'\
+		-or -iname '*.jpg'\
+		-or -iname '*.bmp'`
+	do
+		# Retrieve tags of picture
+		tags=`exiv2 -Pv -g 'Xmp.dc.subject' "$pic"`
+		ifs_change_comma
+		tag_arr=($tags)
+		ifs_revert
+
+		# Picture has tags
+		if [ -n "${tag_arr[0]}" ]; then
+			echo "  $pic | Tags: $tags"
+			for tag_element in "${tag_arr[@]}"
+			do
+				# Remove leading and trailing spaces on the tag
+				tag_element=`echo $tag_element | sed 's/^ *//;s/ *$//'`
+				perform_recreatedb
+			done
+		# Picture has no tag
+		else
+			echo "  $pic | Tags: [none]"
+			tag_element='_No Tag'
+			perform_recreatedb
+		fi
+	done
+
+	ifs_revert
+
+	exit
+}
+
+perform_cleandb()
+{
+	origfile=`readlink -n "$pic"`
+
+	# Check if soft link is still valid
+	if [ ! -f "$origfile" ]; then
+		echo "Original file not found: ${origfile}"
+		echo "Deleting: ${pic}"
+		rm "$pic"
+	fi
+}
+
+cleandb()
+{
+	ifs_change_nb
+
+	echo 'Cleaning photo collection...'
+
+	for pic in `find "$destdir" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+	do
+		perform_cleandb
+	done
+
+	ifs_revert
+
+	exit
+}
+
+perform_genpiclist()
+{
+	echo 'Generating pic list...'
+	echo "Dir: ${gendir}"
+	for pic in `find "$gendir" -iname '*.png'\
+			-or -iname '*.jpg'\
+			-or -iname '*.bmp'`
+	do
+		# Get relative path of picture
+		echo "${pic#*${gendir}\/}">> "${gendir}/.list"
+	done
+}
+
+genpiclist()
+{
+	ifs_change_nb
+
+	if [ -f "${picdir}/.list" ]; then
+		rm "${picdir}/.list"
+	fi
+
+	if [ -f "${destdir}/.list" ]; then
+		rm "${destdir}/.list"
+	fi
+
+	gendir="$picdir"
+	perform_genpiclist
+
+	gendir="$destdir"
+	perform_genpiclist
+
+	ifs_revert
+
+	exit
+}
+
+
+if [ -z "$1" ] || [ "-h" = "$1" ]; then
+	displayhelp
+fi
+
+if [ "-a" = "$1" ]; then
+	# check input target
+	if [ -d "$2" ] || [ -f "$2" ]; then
+		in="$2"
+	fi
+
+	if [ -z "$in" ]; then
+		echo 'Invalid input. Aborting...'
+		exit
+	fi
+
+	# get remaining inputs and save as an array of tags
+	shift 2
+	declare -a tag=("$@")
+
+	# check input tag/s
+	if [ -n "`echo "${tag[@]}" | grep ,`" ]; then
+		echo 'ERROR: Please remove the commas on the tags to be set'
+		exit
+	fi
+	if [ -z "${tag[0]}" ]; then
+		echo 'No tags specified'
+		exit
+	fi
+
+	echo "Add tags specified on: $in"
+	echo "Tags to be added:"
+	for t in "${tag[@]}"
+	do
+		echo "  - $t"
+	done
+
+	prompt
+	addtag
+fi
+
+if [ "-d" = "$1" ]; then
+	# check input target
+	if [ -d "$2" ] || [ -f "$2" ]; then
+		in="$2"
+	fi
+
+	if [ -z "$in" ]; then
+		echo 'Invalid input. Aborting...'
+		exit
+	fi
+
+	# get remaining inputs and save as an array of tags
+	shift 2
+	declare -a tag=("$@")
+
+	# check input tag/s
+	if [ -n "`echo "${tag[@]}" | grep ,`" ]; then
+		echo 'ERROR: Please remove the commas on the tags to be set'
+		exit
+	fi
+
+	echo "Delete tags specified on: $in"
+	if [ -z "${tag[0]}" ]; then
+		echo "Tags to be deleted: ALL TAGS"
+		prompt
+		deletealltag
+	else
+		echo "Tags to be deleted:"
+		for t in "${tag[@]}"
+		do
+			echo "  - $t"
+		done
+
+		prompt
+		deletetag
+	fi
+fi
+
+if [ "-f" = "$1" ]; then
+	# check input target
+	if [ -d "$2" ] || [ -f "$2" ]; then
+		in="$2"
+	fi
+
+	if [ -z "$in" ]; then
+		echo 'Invalid input. Aborting...'
+		exit
+	fi
+
+	if [ -n "$3" ]; then
+		event="$3"
+	fi
+
+	fixdir
+fi
+
+if [ "-v" = "$1" ]; then
+	# check input target
+	if [ -d "$2" ] || [ -f "$2" ]; then
+		in="$2"
+	fi
+
+	if [ -z "$in" ]; then
+		echo 'Invalid input. Aborting...'
+		exit
+	fi
+
+	viewtag
+fi
+
+if [ "-u" = "$1" ]; then
+	chkdirs
+	updatedb
+fi
+
+if [ "-r" = "$1" ]; then
+	chkdirs
+	recreatedb
+fi
+
+if [ "-c" = "$1" ]; then
+	chkdirs
+	cleandb
+fi
+
+if [ "-g" = "$1" ]; then
+	chkdirs
+	chkdirs2
+	genpiclist
+fi
+
+displayhelp
+exit
+

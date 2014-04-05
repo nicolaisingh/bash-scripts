@@ -1,0 +1,84 @@
+#!/bin/bash
+#
+# Script for creating a backup of local pacman and AUR packages compressed using
+# bz2.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+if [ ! -f /bin/tar  ]
+then
+	echo 'Cannot proceed, tar is not installed. Aborting...'
+	exit
+fi
+
+if [ ! -f /usr/bin/bzip2 ]
+then
+	echo 'Cannot proceed, bzip2 is not installed. Aborting...'
+	exit
+fi
+
+if [ ! -f /usr/bin/sudo  ]
+then
+	echo 'Cannot proceed, sudo is not installed. Aborting...'
+	exit
+fi
+
+if [ ! -f /usr/bin/pacman  ]
+then
+	echo 'Cannot proceed, pacman is not installed. Aborting...'
+fi
+
+if [ ! -f /usr/bin/yaourt  ]
+then
+	echo 'Cannot proceed, yaourt is not installed. Aborting...'
+fi
+
+
+currdate=$(date +%Y%m%d_%H%M%S)
+pkgdir='/var/cache/pacman/pkg'
+pkgdiraur='/var/cache/pacman/pkg-yaourt'
+
+
+######## clean official packages before backup ########
+if [ -d $pkgdir ]
+then
+	read -p 'Clean first unused official packages/repositories? [Y/N]' ans
+	case $ans in 
+		[Yy]* ) sudo pacman -Sc;;
+	esac
+else
+	echo 'No local official packages found. Aborting...'
+fi
+
+######## clean AUR packages before backup ########
+if [ -d $pkgdiraur ]
+then
+	read -p 'Clean first unused AUR packages/repositories? [Y/N]' ansaur
+	case $ansaur in
+		[Yy]* ) yaourt -Sc;;
+	esac
+else
+	echo 'No local AUR packages found. Aborting...'
+fi
+
+######## start backup ########
+if [ ! -d './pkgtar' ]
+then
+	mkdir pkgtar
+fi
+
+echo 'Backing up local official packages'
+tar -cvf ./pkgtar/"$currdate"_pkgtar.tar $pkgdir && bzip2 -9v ./pkgtar/"$currdate"_pkgtar.tar
+
+if [ ! -d './pkgtar-aur' ]
+then
+	mkdir pkgtar-aur
+fi
+
+echo 'Backing up local AUR packages'
+tar -cvf ./pkgtar-aur/"$currdate"_pkgtar-aur.tar $pkgdiraur && bzip2 -9v ./pkgtar-aur/"$currdate"_pkgtar-aur.tar
+
+
+exit
+

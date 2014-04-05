@@ -1,0 +1,17 @@
+#!/bin/bash
+#
+# Script for reloading the equalizer module of PulseAudio. Normally used when
+# changing the default output device and you want the equalizer to get loaded
+# for that device.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+ID=`pactl list modules | grep -B2 module-equalizer-sink | grep \# | sed 's/Module #//g'`
+
+echo 'Unloading module-equalizer-sink...'
+pactl unload-module "$ID"
+
+echo 'Reloading module-equalizer-sink...'
+pactl load-module module-equalizer-sink
+

@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Script for displaying system information on the status bar of dwm.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+formatbatt()
+{
+    batt=`acpi -b`
+    case ${batt#*: } in
+    Discharging*)
+        ac=" "
+        ;;
+    *)
+        ac="Â"
+        ;;
+    esac
+
+    batt="${batt#*, }"
+    batt="${batt%,*} "
+
+    if   [ ${batt:0:2} -gt 60 ] || [ ${batt:0:3} -eq 100 ]; then
+        batt="${ac}ó ${batt}"
+    elif [ ${batt:0:2} -gt 30 ]; then
+        batt="${ac}ò ${batt}"
+    elif [ ${batt:0:1} -gt 10 ]; then
+        batt="${ac}ñ ${batt}"
+    else
+        batt="${ac}ñ § "
+    fi
+}
+
+formatvol()
+{
+    amval=`amixer get Master`
+    #vol=`echo -n $amval | grep 'Front Left' | grep -o '...%' | tr -d ' \['`
+    vol=`echo $amval | grep 'Front Left: ' | cut -d ' ' -f 26 | tr -d []`
+    case `echo $amval | grep -o '\[on\]'` in
+    '')
+        vol="ë ${vol}"
+        ;;
+    *)
+        vol="ì ${vol}"
+        ;;
+    esac
+}
+
+formatmpc()
+{
+    mpcd=`systemctl --user status mpd.service | grep -i -o 'inactive'`
+    if [ "$mpcd" = "" ]; then
+        currm=`mpc current`
+        mpcstat=`mpc status | grep -i -o '\[.....'`
+        case $mpcstat in
+        *play*)
+            mpcd="à æ ${currm}"
+            ;;
+        *pause)
+            mpcd="à ç ${currm}"
+            ;;
+        *)
+            mpcd="à å stopped"
+            ;;
+        esac
+    else
+        mpcd="à inactive"
+    fi
+}
+
+drawbars()
+{
+    xsetroot -name "¨ home: ${caphome}   ¨ mmedia: ${capmmedia}    ¨ var: ${capvar}   û ${day} ${dte}   É ${tme}BOTTOM=${batt}  ${vol}   ${mpcd}"
+# Ê 0 unread  TODO
+}
+
+function updatebars
+{
+    formatbatt
+    formatvol
+    formatmpc
+    drawbars
+    sleep 3
+}
+
+# dwm status bars
+while true; do
+    dte=`date "+%m/%d/%y"`
+    tme=`date "+%R"`
+    day=`date "+%a"`
+    caphome=`df | grep '/home' | grep -o ...% | tr -d ' '`
+    capmmedia=`df | grep '/mmedia' | grep -o ...% | tr -d ' '`
+    capvar=`df | grep '/var' | grep -o ...% | tr -d ' '`
+
+    updatebars # 3s
+    updatebars # 6s
+    updatebars # 9s
+    updatebars # 12s
+    updatebars # 15s
+    updatebars # 18s
+    updatebars # 21s
+    updatebars # 24s
+    updatebars # 27s
+    updatebars # 30s
+    updatebars # 33s
+    updatebars # 36s
+    updatebars # 39s
+    updatebars # 42s
+    updatebars # 45s
+    updatebars # 48s
+    updatebars # 51s
+    updatebars # 54s
+    updatebars # 57s
+    updatebars # 60s
+
+done &
+

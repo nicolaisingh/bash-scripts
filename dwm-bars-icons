@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+# Script for displaying system information on the status bar of dwm.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+function __bar_append
+{
+	xname="$1  $xname"
+}
+
+function __make_bar
+{
+	# we want 5 bar fragments
+	fillcnt=`expr $1 / 20`
+
+	bar=''
+
+	# filled fragments
+	i=0
+	for i in `seq 1 $fillcnt`;
+	do
+		bar="${bar}å"
+	done
+
+	# empty fragments
+	for j in `seq $i 4`;
+	do
+		bar="${bar} "
+	done
+
+	bar="[${bar}]"
+}
+
+function get_mpd
+{
+	mpdinfo=`mpc -f '%title%' 2>&1`
+	mpdoff=`echo "$mpdinfo" | grep 'error: Connection refused'`
+	if [ ! "$mpdoff" ]; then
+		mpdcurr=`echo "$mpdinfo" | head -n 1`
+		mpdstate=`echo "$mpdinfo" | grep -o '\[.*\]'`
+	fi
+}
+
+function get_batt
+{
+	battinfo=`acpi`
+	batt=`echo $battinfo | grep -o '[0123456789]*%' | tr -d '%'`
+	battdischarge=`echo $battinfo | grep 'Discharging'`
+}
+
+function get_vol
+{
+	volinfo=`amixer get Master`
+	vol=`echo "$volinfo" | grep -o -m 1 '[0123456789]*%' | tr -d '%'`
+	volmute=`echo "$volinfo" | grep -o -m 1 '\[off\]'`
+}
+
+function get_date
+{
+	dte=`date "+%^b%d %H%M"`
+}
+
+function draw_mpd
+{
+	if [ ! "$mpdoff" ]; then
+		case $mpdstate in
+		'[playing]')
+			mpdfmt="æ $mpdcurr"
+			;;
+		'[paused]')
+			mpdfmt="ç $mpdcurr"
+			;;
+		*)
+			mpdfmt="å Stopped"
+			;;
+		esac
+		__bar_append "${mpdfmt^^}"
+	fi
+}
+
+function draw_batt
+{
+	__make_bar "$batt"
+	if [ "$battdischarge" ]; then
+		battfmt="² $bar"
+	else
+		battfmt="¡ $bar"
+	fi
+	__bar_append "$battfmt"
+}
+
+function draw_vol
+{
+	__make_bar "$vol"
+	if [ "$volmute" ]; then
+		volfmt="ë $bar"
+	else
+		volfmt="ì $bar"
+	fi
+	__bar_append "$volfmt"
+}
+
+function draw_date
+{
+	dtefmt="É $dte"
+	__bar_append "$dtefmt"
+}
+
+
+function do_bar
+{
+	xname=''
+
+	get_date
+	draw_date
+
+	get_batt
+	draw_batt
+
+	get_vol
+	draw_vol
+
+	get_mpd
+	draw_mpd
+
+	xsetroot -d ':0' -name "$xname  "
+}
+
+while true; do
+	do_bar
+	sleep 3s
+done
+

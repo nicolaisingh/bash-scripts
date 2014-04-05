@@ -1,0 +1,32 @@
+# List of files to be backed up
+# NOTE: avoid using '~' character
+
+
+# /home/user
+/home/nas/.local/share
+/home/nas/.config
+/home/nas/.tile
+/home/nas/.Xresources
+/home/nas/.Xresources-2
+/home/nas/.Xresources-3
+/home/nas/.Xresources-urxvt
+/home/nas/.Xresources-xft
+/home/nas/.mpd
+/home/nas/.mpdconf
+/home/nas/.bashrc
+/home/nas/.cover_missing.jpg
+/home/nas/.rtorrent.rc
+/home/nas/.xinitrc
+/home/nas/.xscreensaver
+/home/nas/.gtkrc-2.0
+/home/nas/.gtk-bookmarks
+
+# /usr/share
+/usr/share/vim
+/usr/share/pixmaps/pidgin/status
+/usr/share/gnome-shell
+/usr/share/themes
+/usr/share/fonts
+
+/etc
+/boot/syslinux

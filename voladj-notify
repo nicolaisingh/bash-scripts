@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Simple script for adjusting the system's volume using pactl and displaying a
+# corresponding notification that shows the current volume.
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+function show_help
+{
+	echo 'Script to adjust master volume.'
+	echo 'Usage: voladj-notify [OPTION]'
+	echo 'Options:'
+	echo '  inc : Increase volume'
+	echo '  dec : Decrease volume'
+	echo '  toggle : Mute/unmute volume'
+}
+
+case $1 in
+inc)
+	pactl set-sink-volume @DEFAULT_SINK@ -- '+5%'
+	;;
+dec)
+	pactl set-sink-volume @DEFAULT_SINK@ -- '-5%'
+	;;
+toggle)
+	pactl set-sink-mute @DEFAULT_SINK@ toggle
+	;;
+*)
+	show_help
+	exit
+	;;
+esac
+
+volinfo=`pactl list sinks`
+vol=`echo "$volinfo" | grep -o -m 1 '[0123456789]*%,' | tr -d ','`
+mute=`echo "$volinfo" | grep -o -m 1 'yes'`
+
+if [ "$mute" ]; then
+	label='Mute'
+else
+	label='Volume'
+fi
+
+notify-send -t 1000 -r 10 -u low "$label: $vol"
+

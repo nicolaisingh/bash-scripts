@@ -1,0 +1,165 @@
+#!/bin/bash
+#
+# Script for formatting blocks on the i3blocks status bar.
+# This requires i3blocks as the currently set bar in i3.
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+color_red='#b8596a'
+color_green='#6ab859'
+color_yellow='#b8a759'
+color_cyan='#59b8a7'
+
+defcolor=''
+deffull=''
+defshort=''
+
+color="$defcolor"
+shortext="$defshort"
+fulltext="$deffull"
+block="$1"
+click="$2"
+
+function show_help
+{
+	echo TODO
+}
+
+function block_battery
+{
+	battinfo=`acpi`
+	if [ "$battinfo" ]; then
+		batt=`echo $battinfo | grep -o '[1234567890]*%'`
+		battdischarge=`echo $battinfo | grep 'Discharging'`
+		if [ "$battdischarge" ]; then
+			icon=''
+			if [ $batt -le 20 ]; then
+				icon=''
+				color=$color_red
+				notify-send -u critical 'Battery Critical' 'Charge your laptop to avoid losing your work.'
+			fi
+		else
+			icon=''
+			color=$color_green
+		fi
+		fulltext="$batt"
+	else
+		icon=''
+		fulltext='No Battery'
+		color=$color_red
+	fi
+	shorttext=$fulltext
+}
+
+function block_mpd
+{
+	mpdinfo=`mpc -f '%artist% - %title%' 2>&1`
+	mpdoff=`echo "$mpdinfo" | grep 'error: Connection refused'`
+	if [ ! "$mpdoff" ]; then
+		mpdcurr=`echo "$mpdinfo" | head -n 1`
+		mpdstate=`echo "$mpdinfo" | grep -o '\[.*\]'`
+		case $mpdstate in
+		'[playing]')
+			icon=''
+			fulltext=$mpdcurr
+			;;
+		'[paused]')
+			icon=''
+			fulltext=$mpdcurr
+			;;
+		*)
+			icon=''
+			fulltext=Stopped
+			color=$color_red
+			;;
+		esac
+	else
+		icon=''
+		fulltext=Off
+	fi
+	shortext=$fulltext
+}
+
+function block_time
+{
+	icon=''
+	fulltext=`date '+%b %d %a, %H:%M'`
+	shorttext=$fulltext
+}
+
+function block_volume
+{
+	volinfo=`pactl list sinks`
+	vol=`echo "$volinfo" | grep -o -m 1 '[1234567890]*%,' | tr -d ',%'`
+	mute=`echo "$volinfo" | grep -o -m 1 'yes'`
+	if [ "$mute" ]; then
+		icon=''
+		color=$color_red
+	else
+		if [ $vol -gt 50 ]; then
+			icon=''
+			color=$color_yellow
+		else
+			icon=''
+		fi
+	fi
+	fulltext=$vol%
+}
+
+function do_lclick
+{
+	b="$1"
+	case $b in
+	mpd)
+		/usr/bin/mpc toggle &
+		;;
+	time)
+		/usr/bin/showcal &
+		;;
+	esac
+}
+
+function do_rclick
+{
+	b="$1"
+	case $b in
+	mpd)
+		/usr/bin/mpc stop &
+		;;
+	time)
+		/usr/bin/showcalmonth &
+		;;
+	esac
+}
+
+case $block in
+battery)
+	block_battery
+	;;
+mpd)
+	block_mpd
+	;;
+time)
+	block_time
+	;;
+volume)
+	block_volume
+	;;
+*)
+	show_help
+	exit 1
+esac
+
+if [ "$click" = "1" ]; then
+	do_lclick "$block"
+elif [ "$click" = "3" ]; then
+	do_rclick "$block"
+fi
+
+echo "$icon  $fulltext"
+echo "$icon  $shortext"
+echo "$color"
+
+exit 0
+

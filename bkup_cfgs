@@ -1,0 +1,68 @@
+#!/bin/bash
+#
+# Script for creating a backup copy of files/folders compressed using bz2.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+if [ $EUID -ne 0 ]; then
+	echo 'Please run this script using root/sudo.'
+else
+
+	if [ ! -f /bin/tar  ]
+	then
+		echo 'Cannot proceed, tar is not installed. Aborting...'
+		exit
+	fi
+	if [ ! -f /usr/bin/bzip2 ]
+	then
+		echo 'Cannot proceed, bzip2 is not installed. Aborting...'
+		exit
+	fi
+	if [ ! -f /usr/bin/sudo  ]
+	then
+		echo 'Cannot proceed, sudo is not installed. Aborting...'
+		exit
+	fi	
+
+	currdate=$(date +%Y%m%d_%H%M%S)
+
+	# Create dirs
+	if [ ! -d ./cfgs ]; then
+		mkdir ./cfgs
+	fi
+	if [ ! -d ./${currdate}_cfgs ]; then
+		mkdir ./${currdate}_cfgs
+	fi
+
+
+	# Start copying files/dirs listed in 'dirlist'
+	while read line; do
+		# Copy only those not starting with # (hash), non-empty lines
+		# and existing directories
+		if [ -n "$line" ]; then
+		if [ "${line:0:1}" != '#' ]; then
+		if [ -d "$line" ] || [ -f "$line" ]; then
+			echo "# Backing up ${line}..."
+			if [ -d "$line" ]; then  # Create directory if non-existent
+				mkdir -p "./${currdate}_cfgs/${line%/*}"
+			fi
+			cp -a "$line" "./${currdate}_cfgs/$line"
+		else
+			echo "# Skipping ${line}."
+		fi
+		fi
+		fi
+	done < dirlist
+
+	echo "# Backing up dirlist..."
+	cp -a dirlist ./${currdate}_cfgs
+
+	# Tar and Bzip the copied files/dirs
+	tar -cvf ./cfgs/"$currdate"_cfgs.tar ./${currdate}_cfgs && bzip2 -9v ./cfgs/"$currdate"_cfgs.tar
+
+	# Remove temp dir
+	rm -Rf ./${currdate}_cfgs
+fi
+
+exit

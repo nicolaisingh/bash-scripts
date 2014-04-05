@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Converts all media files in a directory to the specified codec, channel
+# count, bitrate and sampling rate.
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+indir=/mmedia/new
+outdir=/mmedia/converted
+
+codec=libvorbis
+channel=2
+bitrate=256
+bitrate_unit=k
+rate=44100
+
+if [ ! -d "$indir" ]; then
+	echo "$indir could not be found. Exiting..."
+	exit
+fi
+if [ ! -d "$outdir" ]; then
+	mkdir -p "$outdir"
+fi
+
+if [ -n "$1" ]; then
+	outdir="${outdir}/$1"
+
+	if [ ! -d "$outdir" ]; then
+		mkdir -p "$outdir"
+	fi
+fi
+
+oIFS="$IFS"
+IFS=`echo -en "\n\b"`
+
+for file in `find "$indir" -iname "*.*" `
+do
+	bitrate_detect=`ffmpeg -i "$file" 2>&1 | grep 'bitrate:' | cut -d ' ' -f 8`
+	if [ "$bitrate_detect" -lt "$bitrate" ]; then
+		bitrate=$bitrate_detect
+	fi
+	echo "Converting $file (bitrate: $bitrate$bitrate_unit)..."
+	ffmpeg -y -i "$file" -acodec "$codec"  -vn -ac "$channel" -ar "$rate" -ab "$bitrate""$bitrate_unit" "${outdir}/${file##*/}.ogg"
+done
+
+
+IFS="$oIFS"

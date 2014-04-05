@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Wallpaper changer that updates the system's wallpaper based on the current
+# time of the day.
+#
+# Different times of the day:
+# - morning (5:00 - 10:00)
+# - afternoon (11:00 - 16:00)
+# - night (19:00 - 2:00)
+# - transition period (17:00 - 18:00 and 3:00 - 4:00)
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+walldir='/mmedia/img/wall/time'
+
+function setwall
+{
+	today=`date +%H`
+
+	case $today in
+	# morning: 5:00 - 10:00
+	[56789]) file=morning ;;
+	10) file=morning ;;
+	
+	# afternoon: 11:00 - 16:00
+	1[123456]) file=afternoon ;;
+
+	# transition: 17:00 - 18:00
+	1[78]) file=mid ;;
+	
+	# night: 19:00 - 02:00
+	19) file=night ;;
+	2[0123]) file=night ;;
+	012) file=night ;;
+	
+	# transition: 03:00 - 04:00
+	[34]) file=mid ;;
+	*) file=morning ;;
+	esac
+	
+	if [ -f "$walldir/$file.jpg" ]; then
+		hsetroot -fill "$walldir/$file.jpg"
+	else
+		hsetroot -fill "/home/nas/.wallpaper"
+	fi
+}
+
+# set the wallpaper based on current time
+# and sleep until the next hour arrives
+# NOTE: sleep timer is based on minutes so
+#       the extra seconds when the script was started will not be considered
+setwall 
+#echo wall set at `date`
+mins=`date +%M`
+diff=`calc 60 - $mins`
+sleep ${diff}m
+
+# set the wallpaper every hour
+while true; do
+	setwall
+#echo wall set at `date`
+	sleep 1h
+done
+

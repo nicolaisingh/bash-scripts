@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# Script for generating a cscope reference for the entire Linux kernel tree.
+# From: http://cscope.sourceforge.net/large_projects.html
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+KRN=/home/nicolai/kernel/linux-2.6.34.13
+ASM=i386
+
+find "${KRN}" \
+-path "${KRN}/tmp" -prune -o \
+-path "${KRN}/Documentation*" -prune -o \
+-iname "*.[chxs]" -print >cscope.files
+
+cscope -b -q -k
+
+#-path "${KRN}/drivers*" -prune -o \
+#-path "${KRN}/scripts*" -prune -o \
+#-path "${KRN}/arch/*" ! -path "${KRN}/arch/${ASM}*" -prune -o \
+#-path "${KRN}/include/asm-*" ! -path "${KRN}/include/asm-${ASM}*" -prune -o \

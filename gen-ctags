@@ -1,0 +1,48 @@
+#!/bin/bash
+#
+# Script for generating Exuberant Ctags tag files recursively, with a global
+# tag file created on the root directory.
+# Created out of motivation from: http://ctags.sourceforge.net/faq.html
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+_gentag()
+{
+  echo "Generating tags: $DIR"
+  cd "$DIR"
+  ctags *
+}
+
+_gen_globaltag()
+{
+  echo "Generating global tags file: $WORK_DIR"
+  cd "$WORK_DIR"
+  ctags --file-scope=no -R
+}
+
+_ifs_change_nb()
+{
+  O_IFS="$IFS"
+  IFS=`echo -en "\n\b"`
+}
+
+_ifs_revert()
+{
+  IFS="$O_IFS"
+}
+
+WORK_DIR="$1"
+if [ ! -d "$WORK_DIR" ]; then
+  echo "Invalid input: $WORK_DIR"
+  exit
+fi
+
+_ifs_change_nb
+for DIR in `find ${WORK_DIR}/* -type d`
+do
+  _gentag
+done
+_ifs_revert
+
+_gen_globaltag

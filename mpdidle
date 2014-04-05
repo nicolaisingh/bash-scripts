@@ -1,0 +1,25 @@
+#!/bin/bash
+#
+# Script that monitors mpd's idle state and executes commands when the idle
+# state changes. Useful for cases such as updating the i3blocks bar when a
+# song finishes.
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+function update_i3blocks
+{
+	killall -SIGUSR1 i3blocks
+}
+
+if [ `mpc 2>&1 | grep -o 'error'` ]; then
+	echo mpd not running
+	exit 1
+fi
+
+while true
+do
+	mpc idle > /dev/null 2>&1
+	update_i3blocks
+done
+

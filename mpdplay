@@ -1,0 +1,388 @@
+#!/bin/bash
+#
+# An mpd client implemented using dmenu.
+#
+# Currently has the following features:
+# - Browse mpd database according to album/artist/track
+# - Basic playlist management
+# - Shuffle control
+# - Toggle mpd daemon
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+function _dmenu_init
+{
+	font='-fn DroidSans-8'
+	normbg='-nb #3a3a3a'
+	normfg='-nf #ebebeb'
+	selbg='-sb #7685c5'
+	selfg='-sf #ebebeb'
+	addtlopts='-i -b -l 20'
+
+	dmenuopts="$font $normbg $normfg $selbg $selfg $addtlopts"
+}
+
+function _getmpdstate
+{
+	case $1 in
+	'[playing]')
+		mpdstate='Playing: '
+		;;
+	'[paused]')
+		mpdstate='Paused: '
+		;;
+	*)
+		mpdstate='Stopped'
+		;;
+	esac
+}
+
+function _vars_init
+{
+	plpath="/home/nas/.mpd/playlists"
+
+	_mpdinfo=`mpc 2>&1`
+	if [[ `echo $_mpdinfo | grep 'error: Connection refused'` ]]; then
+		mpdon='off'
+		mpdshuf='N/A'
+	else
+		mpdon='on'
+		mpdshuf=`mpc | grep -o 'random: ...' | sed 's/random: //g' | tr -d ' '`
+		currs=`mpc current -f '%artist% - %title% [(%album%[, %date%])]'`
+	fi
+
+	_getmpdstate "`echo "$_mpdinfo" | grep -o '\[.*\]'`"
+}
+
+function _menu_init
+{
+	currpl='Current Playlist'
+	loadpl='Load Playlist'
+	newpl='New Playlist'
+	bartist='Browse Artists'
+	balbum='Browse Albums'
+	btrack='Browse Tracks'
+	currtrack="$mpdstate$currs"
+	shufflepl="Shuffle ($mpdshuf)"
+	togglempd="Toggle mpd ($mpdon)"
+	addsettopl='        Add Current Playlist to Playlist'
+	addtopl='        Add Current Track to Playlist'
+	selall='< Play All >'
+	sep='    -'
+
+	main='main'
+}
+
+function _menu_main
+{
+	menu=\
+"$currpl
+$loadpl
+$newpl
+$sep
+$bartist
+$balbum
+$btrack
+$sep
+$togglempd
+$shufflepl
+$sep
+$currtrack
+$addsettopl
+$addtopl"
+}
+
+function _menu_empty
+{
+	menu=
+}
+
+function _menu_loadpl
+{
+	menu=`mpc lsplaylists | sort`
+}
+
+function _menu_currpl
+{
+	menu=`mpc -f '%position%. [%artist%][ - %title%][ (%time%)]' playlist`
+}
+
+function _menu_bartist
+{
+	menu=`mpc list artist | sort`
+	menu="${selall}\n$menu"
+}
+
+function _menu_balbum
+{
+	if [ -n "$selartist" ]; then
+		# user is browsing from artists
+		menu=`mpc list album artist "$selartist" | sort`
+	else
+		menu=`mpc list album | sort`
+	fi
+	menu="${selall}\n$menu"
+}
+
+function _menu_btrack
+{
+	if [ -n "$selartist" ] && [ -n "$selalbum" ]; then
+		menu=`mpc list title artist "$selartist" album "$selalbum" | sort`
+	elif [ -n "$selalbum" ]; then
+		menu=`mpc list title album "$selalbum" | sort`
+	else
+		menu=`mpc list title | sort`
+	fi
+	menu="${selall}\n$menu"
+}
+
+function _dmenu_disp
+{
+	selmenu=`echo -e "$menu" | dmenu $dmenuopts -p "$1"`
+}
+
+function _loadpl
+{
+	mpc clear
+	mpc load "$selmenu"
+	mpc play
+}
+
+function _newpl
+{
+	pl="${selmenu}.m3u"
+	touch "${plpath}/${pl}"
+}
+
+function _addtopl
+{
+	if [ -n "$1" ]; then
+		f="$1"
+	else
+		f=`mpc current -f %file%`
+	fi
+
+	pl="${selmenu}.m3u"
+	r=`cat "${plpath}/${pl}" | grep "$f"`
+	if [ -z  "$r" ]; then
+		echo "$f" >> "${plpath}/${pl}"
+	fi
+}
+
+function _addsettopl
+{
+	lf=`mpc playlist -f %file%`
+	oIFS="$IFS"
+	IFS=`echo -en "\n\b"` # temporarily remove ' ' from IFS
+	for f in $lf; do
+		_addtopl "$f"
+	done
+	IFS="$oIFS"
+}
+
+function _play_cursel
+{
+	mpc play ${selmenu%%.*}
+}
+
+function _play
+{
+	if [ "$selmenu" = "$selall" ]; then
+		__play_set
+	elif [ -n "$selmenu" ]; then
+		__play_sel
+	fi
+}
+
+function ___play_entire
+{
+	mpc listall | mpc add
+}
+
+function ___play_a
+{
+	mpc findadd artist "$selartist"
+}
+
+function ___play_b
+{
+	mpc findadd album "$selalbum"
+}
+
+function ___play_t
+{
+	mpc findadd title "$seltrack"
+}
+
+function ___play_ab
+{
+	mpc findadd artist "$selartist" album "$selalbum"
+}
+
+function ___play_bt
+{
+	mpc findadd album "$selalbum" title "$seltrack"
+}
+
+function ___play_abt
+{
+	mpc findadd artist "$selartist" album "$selalbum" title "$seltrack"
+}
+
+function __play_set
+{
+	mpc clear
+
+	if [ "$selartist" = "$selall" ]; then
+		___play_entire
+	elif [ "$selalbum" = "$selall" ]; then
+		if [ -n "$selartist" ]; then
+			___play_a
+		else
+			___play_entire
+		fi
+	else
+		if [ -n "$selalbum" ]; then
+			if [ -n "$selartist" ]; then
+				___play_ab
+			else 
+				___play_b
+			fi
+		else
+			___play_entire
+		fi
+	fi
+
+	mpc play
+}
+
+function __play_sel
+{
+	mpc clear
+
+	if [ -z "$selartist" ]; then
+		if [ -z "$selalbum" ]; then
+			___play_t
+		else
+			___play_bt
+		fi
+	else
+		___play_abt	
+	fi
+
+	mpc play
+}
+
+function _toggle_mpd
+{
+	killall mpdidle >/dev/null 2>&1
+	if [ "$mpdon" = "on" ]; then
+		systemctl --user stop mpd.service
+	else
+		systemctl --user start mpd.service
+		sleep 1
+		mpdidle & > /dev/null
+	fi
+}
+
+function _do_menu
+{
+	# display first the main menu upon running
+	selmenu="$main"
+
+	while true; do
+		case $selmenu in
+		$main)
+			_menu_main
+			_dmenu_disp 'Music Player'
+			;;
+		$currpl)
+			_menu_currpl
+			_dmenu_disp 'Current Playlist'
+			if [ -n "$selmenu" ]; then
+				_play_cursel
+			fi
+			exit 0
+			;;
+		$shufflepl)
+			mpc random
+			exit 0
+			;;
+		$loadpl)
+			_menu_loadpl
+			_dmenu_disp 'Load Playlist'
+			if [ -n "$selmenu" ]; then
+				_loadpl
+			fi
+			exit 0
+			;;
+		$newpl)
+			_menu_empty
+			_dmenu_disp 'New Playlist'
+			if [ -n "$selmenu" ]; then
+				_newpl
+			fi
+			exit 0
+			;;
+		$bartist)
+			_menu_bartist
+			_dmenu_disp 'Artists'
+			if [ -n "$selmenu" ]; then
+				selartist="$selmenu"
+				if [ "$selmenu" = "$selall" ]; then
+					_play
+				else
+					selmenu="$balbum"
+				fi
+			fi
+			;;
+		$balbum)
+			_menu_balbum
+			_dmenu_disp 'Albums'
+			if [ -n "$selmenu" ]; then
+				selalbum="$selmenu"
+				if [ "$selmenu" = "$selall" ]; then
+					_play
+				else
+					selmenu="$btrack"
+				fi
+			fi
+			;;
+		$btrack)
+			_menu_btrack
+			_dmenu_disp 'Tracks'
+			if [ -n "$selmenu" ]; then
+				seltrack="$selmenu"
+				_play
+			fi
+			;;
+		$togglempd)
+			_toggle_mpd
+			exit 0
+			;;
+		$addtopl)
+			_menu_loadpl
+			_dmenu_disp 'Add Current Track to Playlist'
+			_addtopl
+			exit 0
+			;;
+		$addsettopl)
+			_menu_loadpl
+			_dmenu_disp 'Add Current Playlist to Playlist'
+			_addsettopl
+			exit 0
+			;;
+		*)
+			exit 0
+			;;
+		esac
+	done
+}
+
+_dmenu_init
+_vars_init
+_menu_init
+
+_do_menu
+

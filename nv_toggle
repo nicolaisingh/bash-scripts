@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Toggle (power ON/OFF) the NVIDIA GPU using bbswitch and nouveau.
+# Created out of motivation from: https://wiki.archlinux.org/index.php/bumblebee
+#
+# Written by Nicolai Andrew Singh, 2013
+#
+
+# verify if running as root
+[[ $EUID -ne 0 ]] && echo 'Please run as root.' && exit 0
+# TODO: check for X
+
+loaded_nouveau=`lsmod | grep nouveau`
+loaded_bbswitch=`lsmod | grep bbswitch`
+
+if [[ $loaded_bbswitch ]]; then
+if [[ $loaded_nouveau ]]; then
+	# power OFF
+	rmmod nouveau
+	tee /proc/acpi/bbswitch <<< OFF >> /dev/null
+	echo 'NVIDIA GPU turned OFF.'
+else
+	# power ON
+	modprobe nouveau
+	tee /proc/acpi/bbswitch <<< ON >> /dev/null
+
+	echo 'NVIDIA GPU turned ON.'
+fi
+else
+	echo 'ERROR: bbswitch module not loaded.'
+fi
+
