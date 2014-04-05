@@ -1,0 +1,12 @@
+#!/bin/bash
+#
+# Splits FLAC/CUE albums into separate FLAC tracks with corresponding track
+# information.
+# From: https://bbs.archlinux.org/viewtopic.php?pid=702289
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+shntool split -f "$1.cue" -o flac "$1.flac"
+cuetag.sh "$1.cue" split-track*.flac
+
