@@ -34,7 +34,7 @@ function block_battery
 		battdischarge=`echo $battinfo | grep 'Discharging'`
 		if [ "$battdischarge" ]; then
 			icon=''
-			if [ $batt -le 20 ]; then
+			if [ `echo $batt | tr -d '%'` -le 20 ]; then
 				icon=''
 				color=$color_red
 				notify-send -u critical 'Battery Critical' 'Charge your laptop to avoid losing your work.'
@@ -88,6 +88,13 @@ function block_time
 	shorttext=$fulltext
 }
 
+function block_user
+{
+	icon=''
+	fulltext=`whoami`
+	shorttext=$fulltext
+}
+
 function block_volume
 {
 	volinfo=`pactl list sinks`
@@ -117,6 +124,9 @@ function do_lclick
 	time)
 		/usr/bin/showcal &
 		;;
+	user)
+		i3-msg mode ' Logout |  Reboot |  Poweroff |  Suspend |  Hibernate' &
+		;;
 	esac
 }
 
@@ -142,6 +152,9 @@ mpd)
 	;;
 time)
 	block_time
+	;;
+user)
+	block_user
 	;;
 volume)
 	block_volume
