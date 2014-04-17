@@ -6,10 +6,10 @@
 #
 
 # Pictures path
-picdir=/mmedia/pic
+picdir=/mmedia/img
 
 # Photo collection path (Tag-arranged)
-destdir=/home/nas/pic-tag
+destdir=/home/nas/img-tag
 
 
 chkdirs()
