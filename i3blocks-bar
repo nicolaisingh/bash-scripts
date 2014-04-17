@@ -97,7 +97,7 @@ function block_user
 
 function block_volume
 {
-	volinfo=`pactl list sinks`
+	volinfo=`pacmd list-sinks | grep '*' -A 12`
 	vol=`echo "$volinfo" | grep -o -m 1 '[1234567890]*%,' | tr -d ',%'`
 	mute=`echo "$volinfo" | grep -o -m 1 'yes'`
 	if [ "$mute" ]; then
