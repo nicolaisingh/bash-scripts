@@ -6,10 +6,10 @@
 # Written by Nicolai Andrew Singh, 2014
 #
 
-color_red='#b8596a'
-color_green='#6ab859'
-color_yellow='#b8a759'
-color_cyan='#59b8a7'
+color_red='#c56078'
+color_green='#78c560'
+color_yellow='#c5ad60'
+color_cyan='#60c5ad'
 
 defcolor=''
 deffull=''
@@ -84,7 +84,7 @@ function block_mpd
 function block_time
 {
 	icon=''
-	fulltext=`date '+%b %d %a, %H:%M'`
+	fulltext=`date '+%H:%M'`
 	shorttext=$fulltext
 }
 
@@ -98,7 +98,7 @@ function block_user
 function block_volume
 {
 	volinfo=`pacmd list-sinks | grep '*' -A 12`
-	vol=`echo "$volinfo" | grep -o -m 1 '[1234567890]*%,' | tr -d ',%'`
+	vol=`echo "$volinfo" | grep -o -m 1 '[1234567890]*%' | head -n 1 | tr -d '%'`
 	mute=`echo "$volinfo" | grep -o -m 1 'yes'`
 	if [ "$mute" ]; then
 		icon=''
@@ -112,6 +112,40 @@ function block_volume
 		fi
 	fi
 	fulltext=$vol%
+	shorttext=$fulltext
+}
+
+function block_weather
+{
+	if [ -f ~/.weather ]; then
+		weather=`cat ~/.weather`
+	else
+		weather=Unavailable
+	fi
+	if [ -f ~/.temp ]; then
+		temp="(`cat ~/.temp`°C)"
+	else
+		temp=''
+	fi
+	case $weather in
+	'Partly Cloudy')
+		icon=''
+		;;
+	'Haze')
+		icon=''
+		;;
+	'Scattered Clouds')
+		icon=''
+		;;
+	'Mostly Cloudy')
+		icon=''
+		;;
+	*)
+		icon=''
+		;;
+	esac
+	fulltext="$weather $temp"
+	shortext=$fulltext
 }
 
 function do_lclick
@@ -158,6 +192,9 @@ user)
 	;;
 volume)
 	block_volume
+	;;
+weather)
+	block_weather
 	;;
 *)
 	show_help
