@@ -13,12 +13,12 @@
 
 function _dmenu_init
 {
-	font='-fn DroidSans-8'
-	normbg='-nb #3a3a3a'
-	normfg='-nf #ebebeb'
-	selbg='-sb #7685c5'
-	selfg='-sf #ebebeb'
-	addtlopts='-i -b -l 20'
+	font='-fn RobotoSlab-8:Bold'
+	normbg='-nb #fafafa'
+	normfg='-nf #848484'
+	selbg='-sb #fafafa'
+	selfg='-sf #111111'
+	addtlopts='-i -l 20 -b'
 
 	dmenuopts="$font $normbg $normfg $selbg $selfg $addtlopts"
 }
