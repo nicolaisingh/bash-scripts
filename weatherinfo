@@ -1,0 +1,28 @@
+#!/bin/bash
+#
+# Continuously retrieves weather information from wunderground's website
+# using lynx and writes them in a file.
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+while true
+do
+	echo '(Loading)' > ~/.weather
+	rm ~/.temp
+
+	weatherinfo=`lynx -dump \
+	http://www.wunderground.com/weather-forecast/PH/Manila.html \
+	| grep 'Current weather conditions' -A 4 | grep -v -e '^ *$' \
+	| sed 's/   //g'`
+
+	echo "$weatherinfo" | sed -n '2p' > ~/.weather
+	echo "$weatherinfo" | sed -n '4p' | grep -o -e '[0-9]*\.[0-9]*' > ~/.temp
+
+	killall -SIGUSR2 i3blocks
+
+	# sleep for around 30m (don't sleep for exactly 30m due to the extra
+	# time the download process takes)
+	sleep 1795
+done
+
