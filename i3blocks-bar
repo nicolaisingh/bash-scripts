@@ -140,6 +140,9 @@ function block_weather
 	'Mostly Cloudy')
 		icon=''
 		;;
+	'Thunderstorm')
+		icon=''
+		;;
 	*)
 		icon=''
 		;;
