@@ -10,7 +10,7 @@ if [ -n "$1" ]; then
     dir="${file%/*}"          # remove filename from path
 
     if [ -f "$file" ]; then
-        feh --image-bg black --scale-down --geometry 640x480 --start-at "$file" "$dir"
+        feh --image-bg black --scale-down --geometry 640x480 --start-at "$file" "$dir" &
         exit 0
     fi
 fi
