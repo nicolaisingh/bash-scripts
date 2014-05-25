@@ -1,0 +1,46 @@
+#!/bin/bash
+#
+# Continuously retrieves gmail information from Gmail using curl and writes
+# them in a file.
+#
+# From: https://gist.github.com/smlb/7dca4b684ca52a2491d1
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+user=username
+pass=password
+
+while true
+do
+	echo '(Loading)' > ~/.gmail
+
+	gmailinfo=`curl -su $user:$pass https://mail.google.com/mail/feed/atom`
+	gmailinfo=`echo "$gmailinfo" | grep "<fullcount>"`
+
+	if [ -n "$gmailinfo" ]; then
+		gmailinfo=`echo $gmailinfo | sed -e s/"<fullcount>"// -e s/"<\/fullcount>"//`
+		case $gmailinfo in
+		1)
+			gmailinfo=`echo $gmailinfo Unread Mail`
+			;;
+		0)
+			gmailinfo='No New Mail'
+			;;
+		*)
+			gmailinfo=`echo $gmailinfo Unread Mails`
+			;;
+		esac
+	else
+		gmailinfo=N/A
+	fi
+
+	echo "$gmailinfo"> ~/.gmail
+
+	killall -SIGUSR2 i3blocks
+
+	# sleep for around 60m (don't sleep for exactly 60m due to the extra
+	# time the download process takes)
+	sleep 3595
+done
+
