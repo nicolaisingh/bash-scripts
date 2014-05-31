@@ -16,7 +16,7 @@ do
 	echo '(Loading)' > ~/.gmail
 
 	gmailinfo=`curl -su $user:$pass https://mail.google.com/mail/feed/atom`
-	gmailinfo=`echo "$gmailinfo" | grep "<fullcount>"`
+	gmailinfo=`echo "$gmailinfo" | grep -o "<fullcount>.*</fullcount>"`
 
 	if [ -n "$gmailinfo" ]; then
 		gmailinfo=`echo $gmailinfo | sed -e s/"<fullcount>"// -e s/"<\/fullcount>"//`
