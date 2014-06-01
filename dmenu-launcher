@@ -1,0 +1,78 @@
+#!/bin/bash
+#
+# An application launcher using dmenu.
+#
+# Written by Nicolai Andrew Singh, 2014
+#
+
+
+dispwidth=`xrandr -q | grep -o "current [[:digit:]]* x [[:digit:]]*" | cut -d ' ' -f2`
+dispheight=`xrandr -q | grep -o "current [[:digit:]]* x [[:digit:]]*" | cut -d ' ' -f4`
+
+# menu arrangement:
+# - browser
+# - video player
+# - gimp
+# - file manager
+# - notepad
+# - search
+# - facebook
+# - G+
+# - linkedin
+# - bitbucket
+# - gmail
+
+menu="\
+
+
+
+
+
+        
+
+
+
+"
+
+answer=`echo "$menu" | \
+dmenu -fn Icons-24 \
+	-nb \#ffffff -nf \#5f5f5f -sb \#ffffff -sf \#72c2e8 \
+	-h 35 -i -dim 0.55 -x $((dispwidth/2-512)) -y $((dispheight*2/3-25)) -w 1025 -h 50`
+
+case $answer in
+'') 
+	/usr/bin/firefox
+	;;
+'')
+	/usr/bin/smplayer
+	;;
+'')
+	/usr/bin/gimp
+	;;
+'')
+	/usr/bin/thunar
+	;;
+'')
+	/usr/bin/leafpad
+	;;
+'        ')
+	/usr/bin/firefox --new-window https://www.facebook.com
+	;;
+'')
+	/usr/bin/firefox --new-window https://plus.google.com
+	;;
+'')
+	/usr/bin/firefox --new-window https://www.linkedin.com
+	;;
+'')
+	/usr/bin/firefox --new-window https://bitbucket.org
+	;;
+'')
+	/usr/bin/firefox --new-window https://mail.google.com
+	;;
+*)
+	;;
+esac
+
+exit 0
+
