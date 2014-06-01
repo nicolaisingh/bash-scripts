@@ -13,12 +13,12 @@
 
 function _dmenu_init
 {
-	font='-fn RobotoSlab-8:Bold'
-	normbg='-nb #fafafa'
-	normfg='-nf #848484'
-	selbg='-sb #fafafa'
-	selfg='-sf #111111'
-	addtlopts='-i -l 20 -b'
+	font='-fn OpenSansCondensed-9'
+	normbg='-nb #ffffff'
+	normfg='-nf #5f5f5f'
+	selbg='-sb #72c2e8'
+	selfg='-sf #ffffff'
+	addtlopts='-i -l 50 -b -x 10 -y 33 -w 450 -dim 0.55'
 
 	dmenuopts="$font $normbg $normfg $selbg $selfg $addtlopts"
 }
@@ -281,7 +281,7 @@ function _toggle_mpd
 		systemctl --user stop mpd.service
 	else
 		systemctl --user start mpd.service
-		sleep 1
+		sleep 3
 		mpdidle & > /dev/null
 	fi
 }
@@ -295,11 +295,11 @@ function _do_menu
 		case $selmenu in
 		$main)
 			_menu_main
-			_dmenu_disp 'Music Player'
+			_dmenu_disp 'MUSIC PLAYER'
 			;;
 		$currpl)
 			_menu_currpl
-			_dmenu_disp 'Current Playlist'
+			_dmenu_disp 'CURRENT PLAYLIST'
 			if [ -n "$selmenu" ]; then
 				_play_cursel
 			fi
@@ -311,7 +311,7 @@ function _do_menu
 			;;
 		$loadpl)
 			_menu_loadpl
-			_dmenu_disp 'Load Playlist'
+			_dmenu_disp 'LOAD PLAYLIST'
 			if [ -n "$selmenu" ]; then
 				_loadpl
 			fi
@@ -319,7 +319,7 @@ function _do_menu
 			;;
 		$newpl)
 			_menu_empty
-			_dmenu_disp 'New Playlist'
+			_dmenu_disp 'NEW PLAYLIST'
 			if [ -n "$selmenu" ]; then
 				_newpl
 			fi
@@ -327,7 +327,7 @@ function _do_menu
 			;;
 		$bartist)
 			_menu_bartist
-			_dmenu_disp 'Artists'
+			_dmenu_disp 'ARTISTS'
 			if [ -n "$selmenu" ]; then
 				selartist="$selmenu"
 				if [ "$selmenu" = "$selall" ]; then
@@ -339,7 +339,7 @@ function _do_menu
 			;;
 		$balbum)
 			_menu_balbum
-			_dmenu_disp 'Albums'
+			_dmenu_disp 'ALBUMS'
 			if [ -n "$selmenu" ]; then
 				selalbum="$selmenu"
 				if [ "$selmenu" = "$selall" ]; then
@@ -351,7 +351,7 @@ function _do_menu
 			;;
 		$btrack)
 			_menu_btrack
-			_dmenu_disp 'Tracks'
+			_dmenu_disp 'TRACKS'
 			if [ -n "$selmenu" ]; then
 				seltrack="$selmenu"
 				_play
@@ -363,13 +363,13 @@ function _do_menu
 			;;
 		$addtopl)
 			_menu_loadpl
-			_dmenu_disp 'Add Current Track to Playlist'
+			_dmenu_disp 'ADD CURRENT TRACK TO PLAYLIST'
 			_addtopl
 			exit 0
 			;;
 		$addsettopl)
 			_menu_loadpl
-			_dmenu_disp 'Add Current Playlist to Playlist'
+			_dmenu_disp 'ADD CURRENT PLAYLIST TO PLAYLIST'
 			_addsettopl
 			exit 0
 			;;
