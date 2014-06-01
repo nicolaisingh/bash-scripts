@@ -6,10 +6,10 @@
 # Written by Nicolai Andrew Singh, 2014
 #
 
-color_red='#c56078'
-color_green='#78c560'
-color_yellow='#c5ad60'
-color_cyan='#60c5ad'
+color_red='#de748f'
+color_green='#84e040'
+color_yellow='#dece80'
+color_cyan='#73e0db'
 
 defcolor=''
 deffull=''
@@ -52,6 +52,31 @@ function block_battery
 	shorttext=$fulltext
 }
 
+function block_gmail
+{
+	if [ -f ~/.gmail ]; then
+		gmail=`cat ~/.gmail`
+	else
+		gmail=N/A
+	fi
+	if [ "$gmail" != "N/A" ]; then
+		icon=''
+		gmail="$gmail"
+	else
+		icon=''
+		gmail='Cannot Open Mail'
+	fi
+	fulltext="$gmail"
+	shorttext=$fulltext
+}
+
+function block_launcher
+{
+	icon=''
+	fulltext='LAUNCHER'
+	shorttext=$fulltext
+}
+
 function block_mpd
 {
 	mpdinfo=`mpc -f '%artist% - %title%' 2>&1`
@@ -84,7 +109,7 @@ function block_mpd
 function block_time
 {
 	icon=''
-	fulltext=`date '+%H:%M'`
+	fulltext=`date '+%H:%M %a, %b %d'`
 	shorttext=$fulltext
 }
 
@@ -143,6 +168,9 @@ function block_weather
 	'Thunderstorm')
 		icon=''
 		;;
+	'Overcast')
+		icon=''
+		;;
 	*)
 		icon=''
 		;;
@@ -155,6 +183,9 @@ function do_lclick
 {
 	b="$1"
 	case $b in
+	launcher)
+		/usr/bin/dmenu-launcher &
+		;;
 	mpd)
 		/usr/bin/mpc toggle &
 		;;
@@ -183,6 +214,12 @@ function do_rclick
 case $block in
 battery)
 	block_battery
+	;;
+gmail)
+	block_gmail
+	;;
+launcher)
+	block_launcher
 	;;
 mpd)
 	block_mpd
