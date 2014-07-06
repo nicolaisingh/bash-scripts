@@ -171,6 +171,9 @@ function block_weather
 	'Overcast')
 		icon=''
 		;;
+	'Rain')
+		icon=''
+		;;
 	*)
 		icon=''
 		;;
