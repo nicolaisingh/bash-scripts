@@ -165,7 +165,7 @@ function block_weather
 	'Mostly Cloudy')
 		icon=''
 		;;
-	'Thunderstorm')
+	*Thunderstorm)
 		icon=''
 		;;
 	'Overcast')
