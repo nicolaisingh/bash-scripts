@@ -13,11 +13,10 @@ do
 
 	weatherinfo=`lynx -dump \
 	http://www.wunderground.com/weather-forecast/PH/Manila.html \
-	| grep 'Current weather conditions' -A 4 | grep -v -e '^ *$' \
-	| sed 's/   //g'`
+	| grep 'Feels Like' -B 2 | sed 's/   //g'`
 
-	echo "$weatherinfo" | sed -n '2p' > ~/.weather
-	echo "$weatherinfo" | sed -n '4p' | grep -o -e '[0-9]*\.[0-9]*' > ~/.temp
+	echo "$weatherinfo" | sed -n '1p' > ~/.weather
+	echo "$weatherinfo" | sed -n '2p' | grep -o -e '[0-9]*\.[0-9]*' > ~/.temp
 
 	killall -SIGUSR2 i3blocks
 
