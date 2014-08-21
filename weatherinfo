@@ -6,10 +6,14 @@
 # Written by Nicolai Andrew Singh, 2014
 #
 
+sleeptime=1800
+
 while true
 do
 	echo '(Loading)' > ~/.weather
 	rm ~/.temp
+
+	killall -SIGUSR2 i3blocks
 
 	weatherinfo=`lynx -dump \
 	http://www.wunderground.com/weather-forecast/PH/Manila.html \
@@ -20,8 +24,7 @@ do
 
 	killall -SIGUSR2 i3blocks
 
-	# sleep for around 30m (don't sleep for exactly 30m due to the extra
-	# time the download process takes)
-	sleep 1795
+	# sleep until next update
+	sleep $sleeptime
 done
 
