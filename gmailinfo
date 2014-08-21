@@ -10,10 +10,12 @@
 
 user=username
 pass=password
+sleeptime=1800
 
 while true
 do
-	echo '(Loading)' > ~/.gmail
+	echo '(Fetching)' > ~/.gmail
+	killall -SIGUSR2 i3blocks
 
 	gmailinfo=`curl -su $user:$pass https://mail.google.com/mail/feed/atom`
 	gmailinfo=`echo "$gmailinfo" | grep -o "<fullcount>.*</fullcount>"`
@@ -39,8 +41,7 @@ do
 
 	killall -SIGUSR2 i3blocks
 
-	# sleep for around 60m (don't sleep for exactly 60m due to the extra
-	# time the download process takes)
-	sleep 3595
+	# sleep until next update
+	sleep $sleeptime
 done
 
