@@ -188,6 +188,9 @@ function block_weather
 function do_lclick
 {
 	case $block in
+	gmail)
+		kill $(ps --ppid $(ps -C gmailinfo -o pid --no-headers) -o pid --no-headers)
+		;;
 	launcher)
 		/usr/bin/dmenu-launcher &
 		;;
@@ -199,6 +202,9 @@ function do_lclick
 		;;
 	user)
 		i3-msg mode ' Logout |  Reboot |  Poweroff |  Suspend |  Hibernate' &
+		;;
+	weather)
+		kill $(ps --ppid $(ps -C weatherinfo -o pid --no-headers) -o pid --no-headers)
 		;;
 	esac
 }
