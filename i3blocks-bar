@@ -187,8 +187,7 @@ function block_weather
 
 function do_lclick
 {
-	b="$1"
-	case $b in
+	case $block in
 	launcher)
 		/usr/bin/dmenu-launcher &
 		;;
@@ -206,8 +205,7 @@ function do_lclick
 
 function do_rclick
 {
-	b="$1"
-	case $b in
+	case $block in
 	mpd)
 		/usr/bin/mpc stop &
 		;;
@@ -216,6 +214,12 @@ function do_rclick
 		;;
 	esac
 }
+
+if [ "$click" = "1" ]; then
+	do_lclick "$block"
+elif [ "$click" = "3" ]; then
+	do_rclick "$block"
+fi
 
 case $block in
 battery)
@@ -244,14 +248,8 @@ weather)
 	;;
 *)
 	show_help
-	exit 1
+	exit 0
 esac
-
-if [ "$click" = "1" ]; then
-	do_lclick "$block"
-elif [ "$click" = "3" ]; then
-	do_rclick "$block"
-fi
 
 echo "$icon  $fulltext"
 echo "$icon  $shortext"
