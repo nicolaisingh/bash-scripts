@@ -122,9 +122,9 @@ function block_user
 
 function block_volume
 {
-	volinfo=`pacmd list-sinks | grep '*' -A 12`
-	vol=`echo "$volinfo" | grep -o -m 1 '[1234567890]*%' | head -n 1 | tr -d '%'`
-	mute=`echo "$volinfo" | grep -o -m 1 'yes'`
+	volinfo=`amixer | grep -m 1 'Front Left: '`
+	vol=`echo "$volinfo" | grep -o "[[:digit:]]*%" | tr -d %`
+	mute=`echo "$volinfo" | grep "\[off\]"`
 	if [ "$mute" ]; then
 		icon=''
 		color=$color_red
