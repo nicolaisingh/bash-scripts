@@ -195,7 +195,7 @@ function do_lclick
 		/usr/bin/dmenu-launcher &
 		;;
 	mpd)
-		/usr/bin/mpc toggle &
+		/usr/bin/mpdplay &
 		;;
 	time)
 		/usr/bin/showcal &
