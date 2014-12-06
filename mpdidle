@@ -9,7 +9,7 @@
 
 function update_i3blocks
 {
-	killall -SIGUSR1 i3blocks
+	pkill -RTMIN+1 i3blocks
 }
 
 if [ `mpc 2>&1 | grep -o 'error'` ]; then

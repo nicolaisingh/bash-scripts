@@ -13,7 +13,7 @@ do
 	echo '(Loading)' > ~/.weather
 	rm ~/.temp
 
-	killall -SIGUSR2 i3blocks
+	pkill -RTMIN+1 i3blocks
 
 	weatherinfo=`lynx -dump \
 	http://www.wunderground.com/weather-forecast/PH/Manila.html \
@@ -22,7 +22,7 @@ do
 	echo "$weatherinfo" | sed -n '1p' > ~/.weather
 	echo "$weatherinfo" | sed -n '2p' | grep -o -e '[0-9]*\.[0-9]*' > ~/.temp
 
-	killall -SIGUSR2 i3blocks
+	pkill -RTMIN+1 i3blocks
 
 	# sleep until next update
 	sleep $sleeptime
