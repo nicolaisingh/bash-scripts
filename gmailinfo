@@ -15,7 +15,7 @@ sleeptime=1800
 while true
 do
 	echo '(Fetching)' > ~/.gmail
-	pkill -RTMIN+1 i3blocks
+	pkill -RTMIN+2 i3blocks
 
 	gmailinfo=`curl -su $user:$pass https://mail.google.com/mail/feed/atom`
 	gmailinfo=`echo "$gmailinfo" | grep -o "<fullcount>.*</fullcount>"`
@@ -39,7 +39,7 @@ do
 
 	echo "$gmailinfo"> ~/.gmail
 
-	pkill -RTMIN+1 i3blocks
+	pkill -RTMIN+2 i3blocks
 
 	# sleep until next update
 	sleep $sleeptime
