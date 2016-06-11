@@ -1,0 +1,49 @@
+#!/bin/bash
+
+print_keys()
+{
+	echo 'Controls'
+	echo '  , or <         : seek -5s'
+	echo '  . or >         : seek +5s'
+	echo '  space or enter : play/pause'
+	echo '  n              : next track'
+	echo '  p              : previous track'
+	echo '  q              : quit'
+}
+
+echo This is mpctrn. Quick controls for mpc.
+print_keys
+
+while true; do
+	read -p '> ' -n1 -s key >/dev/null
+	case $key in
+		[,\<])
+			echo Backward 5secs
+			mpc -q seek -5
+			;;
+		[.\>])
+			echo Forward 5secs
+			mpc -q seek +5
+			;;
+		'') # Space/Enter
+			echo Play/Pause
+			mpc -q toggle
+			;;
+		[nN])
+			echo Next track
+			mpc -q next
+			;;
+		[pP])
+			echo Previous track
+			mpc -q prev
+			;;
+		[qQ])
+			echo Bye
+			exit 0
+			;;
+		*)
+			echo Invalid input
+			print_keys
+			;;
+	esac
+done
