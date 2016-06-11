@@ -1,0 +1,289 @@
+#!/bin/bash -x
+# TODO remove -x
+
+dmenu_opts="-i -l 50"
+
+clear_entries() { unset menu; }
+
+addentry_separator()
+{
+	local entr_sep
+
+	entr_sep='--'
+
+	menu=(
+		"${menu[@]}"
+		"$entr_sep"
+	)
+	menukey["$entr_sep"]=_sep_
+}
+
+addentry_controls()
+{
+	local entr_playpause
+	local entr_stop
+	local entr_prev
+	local entr_play
+
+	entr_playpause=$(mpc status | grep -o '\[playing\]')
+	if [[ -n $entr_playpause ]]; then
+		entr_playpause='|| PAUSE'
+		menukey["$entr_playpause"]=_pause_
+	else
+		entr_playpause='|> PLAY'
+		menukey["$entr_playpause"]=_play_
+	fi
+	entr_stop='[] STOP'
+	entr_prev='|< PREV'
+	entr_next='>| NEXT'
+	menukey["$entr_stop"]=_stop_
+	menukey["$entr_prev"]=_prev_
+	menukey["$entr_next"]=_next_
+
+	menu=(
+		"${menu[@]}"
+		"$entr_playpause"
+		"$entr_stop"
+		"$entr_prev"
+		"$entr_next"
+	)
+}
+
+addentry_currplaylist()
+{
+	local entr_currplaylist
+
+	entr_currplaylist='Current Playlist'
+	menukey["$entr_currplaylist"]=_currplaylist_
+
+	menu=(
+		"${menu[@]}"
+		"$entr_currplaylist"
+	)
+}
+
+addentry_mpdtoggle()
+{
+	local entr_mpd_toggle
+	if [[ $(is_mpd_started) ]]; then
+		entr_mpd_toggle='Stop mpd'
+		menukey["$entr_mpd_toggle"]=_mpdstop_
+	else
+		entr_mpd_toggle='Start mpd'
+		menukey["$entr_mpd_toggle"]=_mpdstart_
+	fi
+
+	menu=(
+		"${menu[@]}"
+		"$entr_mpd_toggle"
+	)
+}
+
+addentry_random()
+{
+	local entr_random
+	local val
+
+	val=$(mpc status | grep -o "random: \(off\|on\)" | cut -d ' ' -f 2)
+	entr_random="Random <$val>"
+	menukey["$entr_random"]=_random_
+
+	menu=(
+		"${menu[@]}"
+		"$entr_random"
+	)
+}
+
+addentry_repeat()
+{
+
+	local entr_repeat
+	local val
+
+	val=$(mpc status | grep -o "repeat: \(off\|on\)" | cut -d ' ' -f 2)
+	entr_repeat="Repeat <$val>"
+	menukey["$entr_repeat"]=_repeat_
+
+	menu=(
+		"${menu[@]}"
+		"$entr_repeat"
+	)
+}
+
+selected_currplaylist()
+{
+	local s
+	menu=(
+		"${menu[@]}"
+		"$(mpc -f '%position%. [%artist%][ - %title%]'  playlist)"
+	)
+
+	show_dmenu 'Current Playlist'
+	s=$(get_selection)
+	mpc play ${s%%.*}
+}
+
+selected_mpdstop()
+{
+	#killall mpdidle >/dev/null 2>&1
+	systemctl --user stop mpd.service
+}
+
+selected_mpdstart()
+{
+	#killall mpdidle >/dev/null 2>&1
+	systemctl --user start mpd.service
+	#sleep 5
+	#mpdidle & >/dev/null
+}
+
+selected_random()
+{
+	mpc random
+}
+
+selected_repeat()
+{
+	mpc repeat
+}
+
+selected_play()
+{
+	mpc play
+}
+
+selected_pause()
+{
+	mpc pause
+}
+
+selected_prev()
+{
+	mpc prev
+}
+
+selected_next()
+{
+	mpc next
+}
+
+selected_stop()
+{
+	mpc stop
+}
+
+is_mpd_started()
+{
+	# FIXME
+	[[ "$mpdstate" = 'on' ]] && echo on || echo 
+}
+
+# Show the built menu
+# $1 : dmenu prompt (optional)
+show_dmenu()
+{
+	local prompt="$1"
+	local s
+
+	s=$(printf "%s\n" "${menu[@]}" | dmenu $dmenu_opts -p "$prompt")
+	selection="$s" 
+}
+
+# Save the menu key of the selection (for menu flow)
+get_key_from_selection()
+{
+	selection_menukey=${menukey[$selection]}
+}
+
+get_selection()
+{
+	echo $selection
+}
+
+# Globals
+declare mpdstate	# mpd state: on/off
+declare selection	# Selected item from the dmenu shown
+declare selection_menukey	# Menu key of selected item
+declare -A menukey	# Menu entry keys
+
+# Get mpd state
+mpc 2>&1 >/dev/null
+if [[ $? -eq 0 ]]; then
+	mpdstate=on
+else
+	mpdstate=off
+fi
+
+# Show the main menu first
+selection_menukey='_main_'
+
+# Show only toggle entry if mpd is not started
+if [[ ! $(is_mpd_started) ]]; then
+	clear_entries
+	addentry_mpdtoggle
+
+	show_dmenu 'Cannot connect to mpd'
+	get_key_from_selection
+fi
+
+# Menu main loop routine
+while true; do
+	clear_entries
+	case $selection_menukey in
+	'_main_')
+		addentry_currplaylist
+		addentry_mpdtoggle
+		addentry_random
+		addentry_repeat
+		addentry_separator
+		addentry_controls
+
+		show_dmenu 'Main Menu'
+		get_key_from_selection
+		;;
+	'_currplaylist_')
+		selected_currplaylist
+		exit 0
+		;;
+	'_mpdstop_')
+		selected_mpdstop
+		exit 0
+		;;
+	'_mpdstart_')
+		selected_mpdstart
+		exit 0
+		;;
+	'_random_')
+		selected_random
+		exit 0
+		;;
+	'_repeat_')
+		selected_repeat
+		exit 0
+		;;
+	'_play_')
+		selected_play
+		exit 0
+		;;
+	'_pause_')
+		selected_pause
+		exit 0
+		;;
+	'_stop_')
+		selected_stop
+		exit 0
+		;;
+	'_prev_')
+		selected_prev
+		exit 0
+		;;
+	'_next_')
+		selected_next
+		exit 0
+		;;
+	*)
+		exit 0
+		;;
+	esac
+done
+
