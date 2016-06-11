@@ -72,7 +72,7 @@ function mkreloutdir
 	fileoutdir=${outdir}${file#$indir}
 
 	# make directories in $outdir similar to $file's structure in $indir
-	local dir="${fileoutdir%$filename}"
+	local dir=${fileoutdir%"$filename"}
 	mkdir -p $dir
 
 	# return created directory's path
