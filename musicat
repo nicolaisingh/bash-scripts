@@ -1,0 +1,213 @@
+#!/bin/bash
+# musicat - Music Cataloger
+#
+# Bash script that uses EXIF tags and hard links to sort a directory containing
+# music files.
+#
+# This script requires the exiftool program installed.
+#
+# To check available EXIF tags for a file, use:
+#   exiftool -S FILE
+#
+# Written by Nicolai Andrew Singh, 2015 (nicolai.singh@gmail.com)
+#
+
+# Creates a hard link based on given params.
+#
+# '$1' : Category output directory
+# '$2' : Path of file to link
+# '$3' : Relative output dir based on tag value
+make_link()
+{
+	local f		# file to link
+	local c		# category output dir
+	local d		# tag value-based output dir
+	local fcl	# clean filename to link
+	local ext	# file extension
+	local covfr # album art path (from)
+	local covto # album art path (to)
+
+	c="$1"
+	f="$2"
+	ext="${f##*.}"
+
+	# Remove extension and path
+	fcl="${f%.*}"
+	fcl="${fcl##*/}"
+
+	d="$3"
+	shift
+	while [[ -n "$3" ]]; do
+		d="$d/$3"
+		shift
+	done
+
+	mkdir -p "$outdir/$c/$d"
+
+	# Link the album art (named cover.jpg), if not yet done
+	covfr="${f%/*}/cover.jpg"
+	covto="$outdir/$c/$d/cover.jpg"
+	if [[ ! -f "$covto" ]] && [[ -f "$covfr" ]]; then
+		ln -f "$covfr" "$covto"
+	fi
+
+	# Link the actual file
+	ln -f "$f" "$outdir/$c/$d/${fcl}.${ext}"
+
+}
+export -f make_link
+
+# Build a music category using the given tag.
+# 
+# $1 : Music tags to extract using exiftool (check the exiftool manpage for
+#      valid tags)
+make_cat()
+{
+	local tag
+	local tagall
+	local file
+	local value
+	local tagval
+	local catstr
+
+	file="$0"	# Get the filename passed when the subshell was created
+	tag=("$@")
+
+	# Concat all the tags into one string
+	catstr=$(printf -- "-%s" "${tag[@]}")
+	catstr=${catstr:1}
+
+	# Get value and trim "<TAG>: " from the output
+	for t in "${tag[@]}"; do
+		value=$(exiftool -S -m "-$t" "$file")
+		value=${value#*: }
+		[[ "$t" = 'Date' ]] && value="${value:0:4}" # Get year only
+		[[ "$t" = 'FileModifyDate' ]] && value="${value:0:10}" # Get date only
+		[[ "$t" = 'FileModifyDate' ]] && value="${value//:/-}" # Change : to -
+		[[ "$value" = '' ]] && value=null
+
+		tagval=("${tagval[@]}" "$value")
+	done
+
+	echo -n "("
+	printf "%s/" "${tagval[@]}"
+	echo "*) : $file"
+
+	make_link "$catstr" "$file" "${tagval[@]}"
+}
+export -f make_cat
+
+# Iterate through the files in $indir and perform the specific function for
+# each file.
+#
+# '$1' : Function to perform for each file
+loop_indir()
+{
+	find "$indir" \( -iname '*.ogg' -o -iname '*.mp3' \) \
+		-exec bash -c "$1" "{}"  \;
+}
+
+show_usage() {
+	echo 'Usage: musicat --in SRC --out DEST'
+	echo 'Catalogs music using hard links and EXIF tags.'
+	echo 'This script requires the exiftool program installed.'
+	echo
+	echo '  -i, --in      input directory; where the files to be'
+	echo '                  cataloged are located'
+	echo '  -o, --out     output directory; where the cataloged files'
+	echo '                  will be stored'
+	echo '  -h, --help    display this help and exit'
+	echo
+	echo 'NOTES:'
+	echo ' Avoid making DEST a subdirectory of SRC to prevent "same file"'
+	echo '   errors when hard linking'
+	echo ' To check available EXIF tags for a file, use:'
+	echo '   exiftool -S FILE'
+}
+
+make_cat_album() {
+	make_cat 'Album'
+}
+
+make_cat_albumartist() {
+	make_cat 'Albumartist'
+}
+
+make_cat_albumartist_album() {
+	make_cat 'Albumartist' 'Album'
+}
+
+make_cat_artist() {
+	make_cat 'Artist'
+}
+
+make_cat_date_artist_album() {
+	make_cat 'Date' 'Artist' 'Album'
+}
+
+make_cat_filemodifydate_artist_album() {
+	make_cat 'FileModifyDate' 'Artist' 'Album'
+}
+
+make_cat_filetype_artist_album() {
+	make_cat 'FileType' 'Artist' 'Album'
+}
+
+make_cat_genre_albumartist_album() {
+	make_cat 'Genre' 'Artist' 'Album'
+}
+
+make_cat_nominalbitrate_artist() {
+	make_cat 'NominalBitrate' 'Artist'
+}
+
+# Make all make_cat_XXX functions visible to the subshell created
+export -f make_cat_album
+export -f make_cat_albumartist
+export -f make_cat_albumartist_album
+export -f make_cat_artist
+export -f make_cat_date_artist_album
+export -f make_cat_filemodifydate_artist_album
+export -f make_cat_filetype_artist_album
+export -f make_cat_genre_albumartist_album
+export -f make_cat_nominalbitrate_artist
+
+# Process inputs
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	'-i' | '--in')
+		shift
+		in="$1"
+		;;
+	'-o' | '--out')
+		shift
+		out="$1"
+		;;
+	'-h' | '--help')
+		show_usage
+		exit 0
+		;;
+	esac
+	shift
+done
+
+[[ -z "$out" || -z "$in" ]] &&
+	echo 'musicat: error: Invalid inputs' && exit 0
+
+[[ -z "$(which exiftool)" ]] &&
+	echo 'musicat: error: Cannot locate exiftool' && exit 0
+
+export outdir="$out"
+export indir="$in"
+
+# Start cataloging the music
+loop_indir 'make_cat_album'
+loop_indir 'make_cat_albumartist'
+loop_indir 'make_cat_albumartist_album'
+loop_indir 'make_cat_artist'
+loop_indir 'make_cat_date_artist_album'
+loop_indir 'make_cat_filemodifydate_artist_album'
+loop_indir 'make_cat_filetype_artist_album'
+loop_indir 'make_cat_genre_albumartist_album'
+loop_indir 'make_cat_nominalbitrate_artist'
+
