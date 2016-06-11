@@ -19,7 +19,7 @@
 #
 
 # setup target directory
-targetdir='/mmedia/music/ogg'
+targetdir='/home/nas/music'
 
 function _help
 {
@@ -54,7 +54,7 @@ function _normalize
 [[ $1 ]] && [[ ! $1 = "-a" ]] && _help && exit 0
 
 # we set min and max depth to [2] so only album paths are affected
-dirlist=`find  "$targetdir" -mindepth 2 -maxdepth 2 | sort`
+dirlist=`find  "$targetdir" -type d | sort`
 
 # temporarily remove the space character in IFS to avoid
 # splitting paths with spaces while iterating through them
