@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Downloads a torrent file from magnet link using
+# aria2c and copies it to a remote through SSH.
+#
+# Written by Nicolai Andrew Singh, 2016
+#
+
+# Where to copy the downloaded file
+destip=192.168.1.204
+destpath=/mnt/usb/dl/torrent-watch
+
+link="$1"
+
+[[ -z "$link" ]] && echo "Enter magnet link to retrieve." && exit 1
+
+tmpoutdir=tmp-pi-magnet-add
+mkdir -p "$tmpoutdir"
+
+# download then copy
+aria2c --bt-metadata-only=true --bt-save-metadata=true \
+	--dir=./"$tmpoutdir" "$link"
+scp -r "$tmpoutdir"/*.torrent ${destip}:"${destpath}"
+
+rm -rf "$tmpoutdir"
+exit 0
+
