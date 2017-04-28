@@ -12,7 +12,7 @@ outdir=/home/nas/music-cnv
 
 # conversion parameters
 channel=2
-bitrate=$((256 * 1024))
+bitrate=$((288 * 1024))
 rate=44100
 oggcodec=libvorbis
 mp3codec=libmp3lame
