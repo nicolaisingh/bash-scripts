@@ -35,7 +35,7 @@ function _normalize_all
 {
 	for d in $dirlist
 	do
-		/usr/bin/vorbisgain -a "$d/*.ogg"
+		/usr/bin/vorbisgain -a $d/*.ogg
 	done
 }
 
@@ -43,7 +43,7 @@ function _normalize
 {
 	for d in $dirlist
 	do
-		/usr/bin/vorbisgain -a -f "$d/*.ogg"
+		/usr/bin/vorbisgain -a -f $d/*.ogg
 	done
 }
 
