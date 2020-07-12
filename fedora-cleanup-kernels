@@ -1,0 +1,13 @@
+#!/bin/bash
+
+sudo -v -p "Enter password for admin privileges: "
+
+if [ $? -eq 0 ]; then
+    echo 'Installed packages with grep in the name:'
+    dnf list installed | grep "^kernel"
+
+    read -p '> What version do I remove?: '
+    sudo dnf remove kernel-{core,devel,modules,modules-extra}-${REPLY}
+
+    sudo -k
+fi
