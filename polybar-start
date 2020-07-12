@@ -1,0 +1,9 @@
+#!/bin/bash
+
+killall -q polybar
+
+# check monitors using xrandr or polybar -m
+MONITOR=eDP-1 polybar -r nas &
+MONITOR=HDMI-1 polybar -r nas &
+
+exit 0
