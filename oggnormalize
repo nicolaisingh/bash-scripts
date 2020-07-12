@@ -54,7 +54,7 @@ function _normalize
 [[ $1 ]] && [[ ! $1 = "-a" ]] && _help && exit 0
 
 # we set min and max depth to [2] so only album paths are affected
-dirlist=`find  "$targetdir" -type d | sort`
+dirlist=`find  "$targetdir" -type d  -not -path '*/library/mp3*' | sort`
 
 # temporarily remove the space character in IFS to avoid
 # splitting paths with spaces while iterating through them
