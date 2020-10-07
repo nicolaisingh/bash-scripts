@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# Convert images in SRCDIR to a lower quality then put them in DSTDIR.
+#
+# The script will check missing files which are not yet in DSTDIR, and
+# will only process those files.  Use variables IMG_QUALITY to specify
+# the preferred image quality (0-100), and IMG_WIDTH for the preferred
+# image width (the aspect ratio is retained).
+#
+# Edit the FILE_EXTENSIONS variable to specify which image file
+# formats will be checked.
+#
+# Author: Nicolai Singh, 2020
+#
+
+# Paths
+SRCDIR=/home/nas/Pictures/srcdir
+DSTDIR=/home/nas/Pictures/dstdir
+
+# Image output properties
+IMG_QUALITY=70
+IMG_WIDTH=1280
+
+# File extensions to convert
+FILE_EXTENSIONS=(png jpg)
+
+##### DON'T CHANGE ANYTHING BELOW UNLESS YOU KNOW WHAT YOU ARE DOING #####
+
+echo $(basename "$0"): $(date)
+
+find_opts=()
+find_opts+=(-type f)
+find_opts+=(-iname '_')
+for i in "${FILE_EXTENSIONS[@]}"
+do
+	find_opts+=(-or -iname "*.$i")
+done
+
+newfiles=$(diff --new-line-format='%<' --unchanged-line-format='' \
+		<(find "$SRCDIR" ${find_opts[@]} -printf '%P\n' | sort) \
+		<(find "$DSTDIR" ${find_opts[@]} -printf '%P\n' | sort))
+
+if [ -z "$newfiles" ]; then
+	echo "No new files found"
+else
+	echo "Found $(wc -l <<< "$newfiles") new files"
+
+	while read filepath
+	do
+		echo "=> Converting $filepath"
+		mkdir -p "$DSTDIR/$(dirname "$filepath")"
+		convert -quality $IMG_QUALITY -resize $IMG_WIDTH "$SRCDIR/$filepath" "$DSTDIR/$filepath"
+	done <<< "$newfiles"
+fi
