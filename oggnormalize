@@ -36,6 +36,11 @@ function _normalize_all
 	for d in $dirlist
 	do
 		/usr/bin/vorbisgain -a $d/*.ogg
+
+		ls "$d"/*.mp3 >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			/usr/bin/mp3gain -a -k $d/*.mp3
+		fi
 	done
 }
 
@@ -44,6 +49,11 @@ function _normalize
 	for d in $dirlist
 	do
 		/usr/bin/vorbisgain -a -f $d/*.ogg
+
+		ls "$d"/*.mp3 >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			/usr/bin/mp3gain -a -k $d/*.mp3
+		fi
 	done
 }
 
@@ -69,4 +79,3 @@ fi
 
 # revert now to the original IFS
 IFS="$oIFS"
-
