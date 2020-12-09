@@ -14,9 +14,17 @@ PLENT_REPLACE="MUSIC_DIR"
 mkdir -p "$PLDIR_MPD"
 cnt=0
 
+# Backup existing playlists
+dt=$(date "+%Y%m%d%H%M")
+mkdir -p "$PLDIR_MPD/playlists-bak"
 while read file
 do
-	echo -en "\033[2KWorking: $(basename $file)\r"
+	mv "$file" "$PLDIR_MPD/playlists-bak/$(basename $file).$dt.old"
+done <<< $(find "$PLDIR_MPD" -type f -name '*.m3u')
+
+# Do the conversion
+while read file
+do
 	cp "$file" "$PLDIR_MPD/$(basename $file).m3u"
 	((++cnt))
 done <<< $(find "$PLDIR_QUODLIBET" -type f)
