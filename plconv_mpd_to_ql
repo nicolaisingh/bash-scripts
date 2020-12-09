@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+# Convert MPD m3u playlists to Quod Libet-compatible playlists and
+# dump them to QL's playlists directory.
+#
+# Quod Libet's playlists are in absolute paths, while mpd is
+# configurable.  This script will assume that the mpd playlists are in
+# relative paths, and from this the script will prepend PLENT_REPLACE
+# in order to convert them to absolute paths.
+
+PLDIR_QUODLIBET="PLAYLIST_DIR"
+PLDIR_MPD="PLAYLIST_DIR"
+PLENT_REPLACE="MUSIC_DIR"
+
+cnt=0
+
+# Backup existing playlists
+dt=$(date "+%Y%m%d%H%M")
+mkdir -p "${PLDIR_QUODLIBET}-bak"
+while read file
+do
+	mv "$file" "${PLDIR_QUODLIBET}-bak/$(basename ${file}.$dt.old)"
+done <<< $(find "$PLDIR_QUODLIBET" -type f)
+
+# Do the conversion
+while read file
+do
+	cp "$file" "$PLDIR_QUODLIBET/$(basename ${file/.m3u/})"
+	((++cnt))
+done <<< $(find "$PLDIR_MPD" -type f -name '*.m3u')
+
+sed -i "s:^:$PLENT_REPLACE:" $PLDIR_QUODLIBET/*
+
+echo "Done.  Files processed: $cnt"
