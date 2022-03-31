@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Recursively converts all mp3 and ogg files in a directory to the specified
 # codec, channel count, bitrate and sampling rate.
@@ -7,8 +7,8 @@
 #
 
 # paths
-indir=/home/nas/music-new
-outdir=/home/nas/music-cnv
+indir=/home/nas/Music/todo
+outdir=/home/nas/Music/converted
 
 # conversion parameters
 channel=2
@@ -30,8 +30,8 @@ function ifs_revert
 
 function get_proper_bitrate
 {
-	# ideally we should set the bitrate to the value specified in this 
-	# script, but if the file's bitrate is still lower, use that value 
+	# ideally we should set the bitrate to the value specified in this
+	# script, but if the file's bitrate is still lower, use that value
 	# instead to avoid further loss of audio quality
 
 	local b=$bitrate
@@ -54,7 +54,7 @@ function get_proper_bitrate
 	elif [ "$detected_bitrate" -lt "$bitrate" ]; then
 		local msg="Detected bitrate ($detected_bitrate) is "
 		msg+="less than the requested bitrate set ($b). "
-		msg+="Using detected bitrate instead." 
+		msg+="Using detected bitrate instead."
 		prtwmsg "$msg"
 		b=$detected_bitrate
 	fi
@@ -205,4 +205,3 @@ ifs_revert
 echo 'All conversions finished. Bye!'
 
 exit 0
-

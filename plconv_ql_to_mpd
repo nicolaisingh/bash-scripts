@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Convert Quod Libet playlists to mpd-compatible m3u playlists and
 # dump them to a directory.
@@ -7,9 +7,9 @@
 # be portable.  This script will create new playlist files in m3u
 # format with relative paths by removing PLENT_REPLACE.
 
-PLDIR_QUODLIBET="PLAYLIST_DIR"
-PLDIR_MPD="PLAYLIST_DIR"
-PLENT_REPLACE="MUSIC_DIR"
+PLDIR_QUODLIBET="/home/nas/.config/quodlibet/playlists"
+PLDIR_MPD="/home/nas/Music/library"
+PLENT_REPLACE="/home/nas/Music/library/"
 
 mkdir -p "$PLDIR_MPD"
 cnt=0

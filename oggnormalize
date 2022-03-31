@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # A script to apply ReplayGain information to ogg vorbis files using
 # vorbisgain. Both track and album gain are applied to reach target level 89dB.
@@ -19,7 +19,9 @@
 #
 
 # setup target directory
-targetdir='/home/nas/music'
+targetdir='/home/nas/Music/library'
+
+vorbisgain_bin=`which vorbisgain`
 
 function _help
 {
@@ -35,7 +37,7 @@ function _normalize_all
 {
 	for d in $dirlist
 	do
-		/usr/bin/vorbisgain -a $d/*.ogg
+		$vorbisgain_bin -a $d/*.ogg
 
 		ls "$d"/*.mp3 >/dev/null 2>&1
 		if [ $? -eq 0 ]; then
@@ -48,7 +50,7 @@ function _normalize
 {
 	for d in $dirlist
 	do
-		/usr/bin/vorbisgain -a -f $d/*.ogg
+		$vorbisgain_bin -a -f $d/*.ogg
 
 		ls "$d"/*.mp3 >/dev/null 2>&1
 		if [ $? -eq 0 ]; then

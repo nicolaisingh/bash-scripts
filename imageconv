@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Convert images in SRCDIR to a lower quality then put them in DSTDIR.
 #
@@ -14,8 +14,8 @@
 #
 
 # Paths
-SRCDIR=/home/nas/Pictures/srcdir
-DSTDIR=/home/nas/Pictures/dstdir
+SRCDIR=/run/media/nas/nas-deskdrv/files
+DSTDIR=/run/media/nas/nas-deskdrv/files-low
 
 # Image output properties
 IMG_QUALITY=70

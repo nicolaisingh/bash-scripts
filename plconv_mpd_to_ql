@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Convert MPD m3u playlists to Quod Libet-compatible playlists and
 # dump them to QL's playlists directory.
@@ -8,9 +8,9 @@
 # relative paths, and from this the script will prepend PLENT_REPLACE
 # in order to convert them to absolute paths.
 
-PLDIR_QUODLIBET="PLAYLIST_DIR"
-PLDIR_MPD="PLAYLIST_DIR"
-PLENT_REPLACE="MUSIC_DIR"
+PLDIR_QUODLIBET="/home/nas/.config/quodlibet/playlists"
+PLDIR_MPD="/home/nas/Music/library"
+PLENT_REPLACE="/home/nas/Music/library"
 
 cnt=0
 
