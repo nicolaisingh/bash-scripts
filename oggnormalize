@@ -22,6 +22,7 @@
 targetdir='/home/nas/Music/library'
 
 vorbisgain_bin=`which vorbisgain`
+mp3gain_bin=`which mp3gain`
 
 function _help
 {
@@ -41,7 +42,7 @@ function _normalize_all
 
 		ls "$d"/*.mp3 >/dev/null 2>&1
 		if [ $? -eq 0 ]; then
-			/usr/bin/mp3gain -a -k $d/*.mp3
+			$mp3gain_bin -a -k $d/*.mp3
 		fi
 	done
 }
@@ -54,7 +55,7 @@ function _normalize
 
 		ls "$d"/*.mp3 >/dev/null 2>&1
 		if [ $? -eq 0 ]; then
-			/usr/bin/mp3gain -a -k $d/*.mp3
+			$mp3gain_bin -a -k $d/*.mp3
 		fi
 	done
 }
