@@ -1,0 +1,160 @@
+#!/usr/bin/env bash
+#
+# Recursively converts all mp3 and ogg files in a directory to the specified
+# codec, channel count, bitrate and sampling rate.
+#
+# Written by Nicolai Andrew Singh, 2016
+#
+
+# paths
+indir=/hdd/music/todo
+outdir=/hdd/music/converted
+
+# conversion parameters
+oggcodec=libvorbis
+mp3codec=libmp3lame
+
+function ifs_change
+{
+	oIFS="$IFS"
+	IFS=`echo -en "\n\b"`
+}
+
+function ifs_revert
+{
+	IFS="$oIFS"
+}
+
+function mkreloutdir
+{
+	local file=$1
+	local filename=$2
+	local fileoutdir
+
+	# get path relative from indir and append to outdir
+	fileoutdir=${outdir}${file#$indir}
+
+	# make directories in $outdir similar to $file's structure in $indir
+	local dir=${fileoutdir%"$filename"}
+	mkdir -p $dir
+
+	# return created directory's path
+	echo "$dir"
+}
+
+function convert_ogg
+{
+	local file=$1
+	local fileoutdir=$2
+	local filename=$3
+
+	echo "    Converting... (Press 'q' to skip)"
+	ffmpeg -loglevel warning \
+		-y \
+		-i "$file" \
+	 	-acodec "$oggcodec" \
+	 	-vn \
+		-aq 10 \
+	 	"${fileoutdir}${filename}.ogg"
+}
+
+function convert_mp3
+{
+	local file=$1
+	local fileoutdir=$2
+	local filename=$3
+
+	echo "    Converting... (Press 'q' to skip)"
+	ffmpeg -loglevel warning \
+		-y \
+		-i "$file" \
+	 	-acodec "$mp3codec" \
+	 	-vn \
+		-qa 10 \
+	 	"${fileoutdir}${filename}.mp3"
+}
+
+function convert
+{
+	local file=$1
+	local ftype=${file##*.}
+	local reloutdir
+	local filename=`basename "$file"`
+
+	case $ftype in
+	'flac')
+		prtimsg "[${ftype^^}=>OGG] (Quality: 10)" "$file"
+		reloutdir=`mkreloutdir "$file" "$filename"`
+		convert_ogg "$file" "$reloutdir" "$filename"
+		;;
+	'ogg')
+		prtimsg "[${ftype^^}=>OGG] (Quality: 10)" "$file"
+		reloutdir=`mkreloutdir "$file" "$filename"`
+		convert_ogg "$file" "$reloutdir" "$filename"
+		;;
+	'mp3')
+		prtimsg "[${ftype^^}=>MP3] (Quality: 10)" "$file"
+		reloutdir=`mkreloutdir "$file" "$filename"`
+		convert_mp3 "$file" "$reloutdir" "$filename"
+		;;
+	*)
+		# file extension is not supported
+		prtemsg "Don't know how to convert: $file"
+		;;
+	esac
+}
+
+function get_files
+{
+	# if $1 is empty, there are no more directores to recurse into
+	if [ -n "$1" ]; then
+		local searchdir="$1"
+
+		# check for files to convert
+		prtimsg '[CHECKING]' "$searchdir"
+		for file in `find "$searchdir" -mindepth 1 -maxdepth 1 -type f`
+		do
+			convert "$file"
+		done
+
+		# check for subdirectories to recurse
+		for dir in `find "$searchdir" -mindepth 1 -maxdepth 1 -type d`
+		do
+			get_files "$dir"
+		done
+	fi
+}
+
+function prtimsg
+{
+	echo -e "\e[1;34m$1\e[0m $2"
+}
+
+function prtwmsg
+{
+	echo -e "\e[1;31m[WARNING]\e[0m $1" >&2
+}
+
+function prtemsg
+{
+	echo -e "\e[1;31m[ERROR]\e[0m $1" >&2
+}
+
+if [ ! -d "$indir" ]; then
+	echo " ** ERROR: $indir could not be found. Exiting..."
+	exit
+fi
+
+if [ ! -d "$outdir" ]; then
+	mkdir -p "$outdir"
+fi
+
+echo -e 'Batch convert music files\n'
+
+ifs_change
+get_files "$indir"
+ifs_revert
+
+echo 'All conversions finished. Bye!'
+
+exit 0
