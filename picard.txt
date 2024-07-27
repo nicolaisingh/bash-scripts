@@ -1,0 +1,39 @@
+LOAD ./Music/converted
+CLUSTER
+LOOKUP clustered
+SAVE_MATCHED
+
+FINGERPRINT
+SCAN
+
+REMOVE_SAVED
+REMOVE_EMPTY
+
+
+# # Try clustering and lookup the clusters first
+# CLUSTER
+# LOOKUP_CLUSTERED
+
+# # Save matched clusters
+# SAVE_MATCHED
+
+# # Calculate and submit fingerprints for the matched files
+# FINGERPRINT
+# SUBMIT_FINGERPRINTS
+
+# # Clean up and remove the saved files
+# REMOVE_SAVED
+# REMOVE_EMPTY
+
+# # Try scanning the remaining files to find matches
+# SCAN
+
+# # Save matched files from the scans
+# SAVE_MATCHED
+
+# # Clean up and remove the saved files
+# REMOVE_SAVED
+# REMOVE_EMPTY
+
+# # Any files remaining in the cluster pane could not be
+# # matched automatically
