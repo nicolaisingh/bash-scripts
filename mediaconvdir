@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+#
+# Convert images and videos to a lower quality then put them in `out'.
+#
+# Edit the *_FILE_EXTENSIONS variable to specify which image and video
+# file formats will be converted.
+
+INDIR=$1
+
+# Image output properties
+IMG_QUALITY=70
+IMG_WIDTH=1280
+
+# File extensions to convert
+IMG_FILE_EXTENSIONS=(png jpg)
+VID_FILE_EXTENSIONS=(mp4)
+
+###########################################
+
+echo $(basename "$0"): $(date)
+mkdir -p "$INDIR/out"
+
+## Images
+
+img_find_opts=()
+img_find_opts+=(-maxdepth 1)
+img_find_opts+=(-type f)
+img_find_opts+=(-iname '_')
+for i in "${IMG_FILE_EXTENSIONS[@]}"
+do
+	img_find_opts+=(-or -iname "*.$i")
+done
+
+find "$1" ${img_find_opts[@]} \
+     -printf '=> Converting %P\n' \
+     -exec bash -c 'magick $1 -quality $3 -resize $2 $0/out/$(basename $1)' $INDIR {} $IMG_WIDTH $IMG_QUALITY \;
+
+## Videos
+
+vid_find_opts=()
+vid_find_opts+=(-maxdepth 1)
+vid_find_opts+=(-type f)
+vid_find_opts+=(-iname '_')
+for i in "${VID_FILE_EXTENSIONS[@]}"
+do
+	vid_find_opts+=(-or -iname "*.$i")
+done
+
+find "$1" ${vid_find_opts[@]} \
+     -printf '=> Converting %P\n' \
+     -exec bash -c 'ffmpeg -y -i $1 -vcodec libx264 -vf "scale=trunc(iw/6)*2:trunc(ih/6)*2" -crf 20 $0/out/$(basename $1)' $INDIR {} \;
