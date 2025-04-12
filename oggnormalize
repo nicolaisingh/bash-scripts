@@ -3,9 +3,6 @@
 # A script to apply ReplayGain information to ogg vorbis files using
 # vorbisgain. Both track and album gain are applied to reach target level 89dB.
 #
-# Use "oggnormalize -a" to normalize _all_ files in target dir.
-# Use "oggnormalize" to normalize only files in target dir without RG data.
-#
 # Written by Nicolai Andrew Singh, 2013
 #
 
@@ -34,51 +31,31 @@ function _help
 	echo Use "oggnormalize" to normalize only files in target dir without RG data.
 }
 
-function _normalize_all
-{
-	for d in $dirlist
-	do
-		$vorbisgain_bin -a $d/*.ogg
-
-		ls "$d"/*.mp3 >/dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			$mp3gain_bin -a -k $d/*.mp3
-		fi
-	done
-}
-
-function _normalize
-{
-	for d in $dirlist
-	do
-		$vorbisgain_bin -a -f $d/*.ogg
-
-		ls "$d"/*.mp3 >/dev/null 2>&1
-		if [ $? -eq 0 ]; then
-			$mp3gain_bin -a -k $d/*.mp3
-		fi
-	done
-}
-
 
 [[ $1 = "--help" ]] && _help && exit 0
 [[ $1 = "-help" ]] && _help && exit 0
 [[ $1 = "-h" ]] && _help && exit 0
-[[ $1 ]] && [[ ! $1 = "-a" ]] && _help && exit 0
 
-# we set min and max depth to [2] so only album paths are affected
-dirlist=`find  "$targetdir" -type d  -not -path '*/library/mp3*' | sort`
+dirlist=$(find "$targetdir" -mindepth 3 -type d \
+	       -not -path '*/library/mp3*' \
+	       -not -path '*/library/all*' \
+	      | sort)
 
 # temporarily remove the space character in IFS to avoid
 # splitting paths with spaces while iterating through them
 oIFS="$IFS"
 IFS=`echo -en '\n\b'`
 
-if [ "$1" = "-a" ]; then
-	_normalize_all
-else
-	_normalize
-fi
+for d in $dirlist
+do
+    $vorbisgain_bin -a -f -q $d/*.ogg
+
+    ls "$d"/*.mp3 >/dev/null 2>&1
+    if [ $? -eq 0 ]; then
+	$mp3gain_bin -a -k -q $d/*.mp3
+    fi
+done
+
 
 # revert now to the original IFS
 IFS="$oIFS"
