@@ -7,8 +7,8 @@
 #
 
 # paths
-indir=/home/nas/Music/todo
-outdir=/home/nas/Music/converted
+indir=/hdd/music/todo
+outdir=/hdd/music/converted
 
 # conversion parameters
 channel=2

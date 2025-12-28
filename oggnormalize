@@ -16,7 +16,7 @@
 #
 
 # setup target directory
-targetdir='/home/nas/Music/library'
+targetdir='/hdd/music/library/'
 
 vorbisgain_bin=`which vorbisgain`
 mp3gain_bin=`which mp3gain`

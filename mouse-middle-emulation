@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+id=$(xinput | grep 'Kensington ORBIT WIRELESS TB Mouse' | grep -o 'id=[0-9]*' | cut -d= -f2)
+xinput set-prop $id "libinput Middle Emulation Enabled" 1
+echo "Middle Emulation set for $id"
