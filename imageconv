@@ -9,9 +9,6 @@
 #
 # Edit the FILE_EXTENSIONS variable to specify which image file
 # formats will be checked.
-#
-# Author: Nicolai Singh, 2020
-#
 
 # Paths
 SRCDIR=/run/media/nas/nas-deskdrv/files
@@ -29,26 +26,51 @@ FILE_EXTENSIONS=(png jpg)
 echo $(basename "$0"): $(date)
 
 find_opts=()
-find_opts+=(-type f)
-find_opts+=(-iname '_')
-for i in "${FILE_EXTENSIONS[@]}"
-do
-	find_opts+=(-or -iname "*.$i")
+for i in "${FILE_EXTENSIONS[@]}"; do
+    if [ ${#find_opts[@]} -eq 0 ]; then
+        find_opts+=(-iname "*.$i")
+    else
+        find_opts+=(-o -iname "*.$i")
+    fi
 done
+find_opts=(-type f \( "${find_opts[@]}" \))
+
+x=$(find "$SRCDIR" "${find_opts[@]}" -printf '%P\n' | sort)
+y=$(find "$DSTDIR" "${find_opts[@]}" -printf '%P\n' | sort)
 
 newfiles=$(diff --new-line-format='%<' --unchanged-line-format='' \
-		<(find "$SRCDIR" ${find_opts[@]} -printf '%P\n' | sort) \
-		<(find "$DSTDIR" ${find_opts[@]} -printf '%P\n' | sort))
+                <(find "$SRCDIR" ${find_opts[@]} -printf '%P\n' | sort) \
+                <(find "$DSTDIR" ${find_opts[@]} -printf '%P\n' | sort))
+
+echo "Starting convert..."
+if [ -z "$newfiles" ]; then
+    echo "[with-resize] No new files found"
+else
+    echo "Found $(wc -l <<< "$newfiles") new files"
+
+    while read filepath
+    do
+        echo "=> Converting $filepath"
+        mkdir -p "$DSTDIR/$(dirname "$filepath")"
+        magick -quality $IMG_QUALITY -resize $IMG_WIDTH "$SRCDIR/$filepath" "$DSTDIR/$filepath"
+    done <<< "$newfiles"
+fi
+
+echo -e
+echo "Starting convert with no resize (for images smaller than ${IMG_WIDTH})..."
+newfiles=$(diff --new-line-format='%<' --unchanged-line-format='' \
+                <(find "$SRCDIR" ${find_opts[@]} -printf '%P\n' | sort) \
+                <(find "$DSTDIR" ${find_opts[@]} -printf '%P\n' | sort))
 
 if [ -z "$newfiles" ]; then
-	echo "No new files found"
+    echo "[no-resize] Nothing to process"
 else
-	echo "Found $(wc -l <<< "$newfiles") new files"
+    echo "Found $(wc -l <<< "$newfiles") new files"
 
-	while read filepath
-	do
-		echo "=> Converting $filepath"
-		mkdir -p "$DSTDIR/$(dirname "$filepath")"
-		convert -quality $IMG_QUALITY -resize $IMG_WIDTH "$SRCDIR/$filepath" "$DSTDIR/$filepath"
-	done <<< "$newfiles"
+    while read filepath
+    do
+        echo "=> Converting $filepath"
+        mkdir -p "$DSTDIR/$(dirname "$filepath")"
+        magick -quality $IMG_QUALITY "$SRCDIR/$filepath" "$DSTDIR/$filepath"
+    done <<< "$newfiles"
 fi
