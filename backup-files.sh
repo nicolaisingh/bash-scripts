@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Usage: $0 /mnt/destination/path
 
-rsyncopts="-ravh --info=NAME1 --progress --log-file=${HOME}/backup-files.log"
+rsyncopts="-ravhL --info=NAME1 --progress --log-file=${HOME}/backup-files.log"
 
 echo '' > ${HOME}/backup-files.log
 
@@ -17,9 +17,8 @@ dirs=(
     "${HOME}/Mail/" "${dest}/mail"
     "${HOME}/Music/" "${dest}/music"
     "${HOME}/News/" "${dest}/news"
-    "${HOME}/Pictures/" "${dest}/img"
+    # "${HOME}/Pictures/" "${dest}/img"
     "${HOME}/calibre/" "${dest}/calibre"
-    "${HOME}/configs/" "${dest}/configs"
     "${HOME}/dev/" "${dest}/dev"
     "${HOME}/foo-shop/" "${dest}/foo-shop"
     "${HOME}/games/" "${dest}/games"
@@ -29,10 +28,11 @@ dirs=(
     "${HOME}/org-backups/" "${dest}/org-backups"
     "${HOME}/org/" "${dest}/org"
     "${HOME}/prj/" "${dest}/prj"
+    "${HOME}/recordings/" "${dest}/recordings"
     # "${HOME}/src/" "${dest}/src"
     "${HOME}/sw/" "${dest}/sw"
     "/mnt/files/guitar/" "${dest}/guitar"
-    "/mnt/files/img/" "${dest}/img"
+    # "/mnt/files/img/" "${dest}/img"
     "/mnt/files/pgp/" "${dest}/pgp"
     "/mnt/files/src/" "${dest}/src"
 )

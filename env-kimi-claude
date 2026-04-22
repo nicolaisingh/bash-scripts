@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# ENABLE_TOOL_SEARCH=false \
+
+exec env \
+	ANTHROPIC_BASE_URL="https://api.kimi.com/coding/" \
+	ANTHROPIC_API_KEY="$(pass show 'Kimi Code/personal')" \
+	ANTHROPIC_MODEL="kimi-for-coding" \
+	ANTHROPIC_SMALL_FAST_MODEL="kimi-k2.6" \
+	CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1 \
+	"$@"
